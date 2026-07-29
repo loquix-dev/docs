@@ -1,0 +1,25 @@
+---
+interface Props {
+	label?: string;
+	compact?: boolean;
+}
+
+const { label = 'Preview', compact = false } = Astro.props;
+---
+
+<div class:list={['loquix-preview', { 'loquix-preview--compact': compact }]}>
+	<div class="loquix-preview__bar">
+		<span class="loquix-preview__label">{label}</span>
+		<span class="loquix-preview__status"><i></i> Live component</span>
+	</div>
+	<div class="loquix-preview__canvas">
+		<slot />
+	</div>
+</div>
+
+<script>
+	import '@loquix/core/define/define-chat-composer';
+	import '@loquix/core/define/define-message-content';
+	import '@loquix/core/define/define-message-item';
+	import '@loquix/core/define/define-typing-indicator';
+</script>

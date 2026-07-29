@@ -1,0 +1,133 @@
+---
+title: Chat Composer
+description: Composite prompt input with submit, streaming, toolbars, suggestions, and file-drop support.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Core component</p>
+
+`<loquix-chat-composer>` combines a prompt input, send or stop control, drop zone, and composable toolbar areas.
+
+<div class="component-meta">
+	<span>loquix-chat-composer</span>
+	<span>since 0.4</span>
+	<span>interactive</span>
+</div>
+
+## Preview
+
+<LivePreview label="Contained variant">
+	<loquix-chat-composer
+		variant="contained"
+		placeholder="Ask me anything…"
+		max-length="4000"
+	></loquix-chat-composer>
+</LivePreview>
+
+Type a message to enable the submit button. Press <kbd>Enter</kbd> or select the button to emit `loquix-submit`.
+
+## Usage
+
+```js
+import '@loquix/core/define/define-chat-composer';
+```
+
+```html
+<loquix-chat-composer
+  variant="contained"
+  placeholder="Ask me anything…"
+  max-length="4000"
+></loquix-chat-composer>
+```
+
+```js
+const composer = document.querySelector('loquix-chat-composer');
+
+composer.addEventListener('loquix-submit', (event) => {
+  sendMessage(event.detail.content);
+});
+
+composer.addEventListener('loquix-stop', () => {
+  abortGeneration();
+});
+```
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `variant` | `variant` | `'default' \| 'contained'` | `'contained'` | Selects the classic side-by-side or contained layout. |
+| `placeholder` | `placeholder` | `string` | localized text | Placeholder forwarded to the prompt input. |
+| `disabled` | `disabled` | `boolean` | `false` | Disables both input and action button. |
+| `submitDisabled` | `submit-disabled` | `boolean` | `false` | Blocks submit while the input remains editable. |
+| `streaming` | `streaming` | `boolean` | `false` | Replaces submit with a stop control. |
+| `maxLength` | `max-length` | `number` | `0` | Maximum input length. `0` means unlimited. |
+
+## Events
+
+| Event | Detail | Description |
+| --- | --- | --- |
+| `loquix-submit` | `{ content: string }` | Fired when the user submits non-empty content. |
+| `loquix-stop` | `{}` | Fired when the stop control is selected in streaming mode. |
+| `loquix-paste-files` | `{ files: File[] }` | Bubbles when files are pasted; automatically forwarded to a slotted attachment panel. |
+| `loquix-drop` | `{ files: File[] }` | Bubbles when files are dropped; automatically forwarded to a slotted attachment panel. |
+
+<Aside type="note">
+	All Loquix events bubble and cross Shadow DOM boundaries. Handle them at the component, form, chat container, or document level.
+</Aside>
+
+## Slots
+
+| Slot | Purpose |
+| --- | --- |
+| `toolbar-top` | Content above the input area. |
+| `input` | Replaces the built-in prompt input. |
+| `suggestions` | Suggested prompts shown below the input. |
+| `toolbar-bottom` | Content below the input area. |
+| `actions-left` | Left side of the contained actions bar. |
+| `actions-right` | Right side of the contained actions bar, before submit. |
+| `footer` | Footer content below the composer. |
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `composer` | Outer wrapper. |
+| `container` | Bordered container in the `contained` variant. |
+| `toolbar` | Top and bottom toolbar areas. |
+| `actions-bar` | Bottom actions row in the `contained` variant. |
+| `send-button` | Submit or stop button. |
+
+```css title="Target the submit control"
+loquix-chat-composer::part(send-button) {
+  box-shadow: 0 8px 24px rgb(91 67 230 / 30%);
+}
+```
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-composer-bg` | Composer background. |
+| `--loquix-composer-border-color` | Top border color. |
+| `--loquix-composer-padding` | Inner padding. |
+| `--loquix-composer-gap` | Space between sections. |
+| `--loquix-composer-container-bg` | Contained surface background. |
+| `--loquix-composer-container-border-color` | Contained surface border. |
+| `--loquix-composer-container-border-radius` | Contained surface radius. |
+| `--loquix-send-button-bg` | Submit button background. |
+| `--loquix-send-button-color` | Submit button icon color. |
+
+## Streaming state
+
+Set `streaming` while the model is producing output. The primary action becomes a stop control and emits `loquix-stop`.
+
+<LivePreview label="Streaming state">
+	<loquix-chat-composer
+		variant="contained"
+		placeholder="Generation in progress…"
+		streaming
+	></loquix-chat-composer>
+</LivePreview>

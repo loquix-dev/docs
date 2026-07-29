@@ -1,0 +1,137 @@
+---
+title: Message Item
+description: Message bubble with sender alignment, status states, metadata, avatars, actions, and inline editing.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Core component</p>
+
+`<loquix-message-item>` is the compositional shell for one chat message. It owns sender alignment, status, metadata, actions, and optional collapse behavior.
+
+<div class="component-meta">
+	<span>loquix-message-item</span>
+	<span>composite</span>
+	<span>status-aware</span>
+</div>
+
+## Preview
+
+<LivePreview label="Conversation pair">
+	<div class="home-demo">
+		<loquix-message-item sender="assistant" status="complete" model="Loquix" timestamp="10:42" show-avatar>
+			<loquix-message-content>
+				Use the sender and status attributes to describe the message. The component takes care of layout and state.
+			</loquix-message-content>
+		</loquix-message-item>
+		<loquix-message-item sender="user" status="complete">
+			<loquix-message-content>That keeps the message list pleasantly simple.</loquix-message-content>
+		</loquix-message-item>
+	</div>
+</LivePreview>
+
+## Usage
+
+```js
+import '@loquix/core/define/define-message-item';
+import '@loquix/core/define/define-message-content';
+```
+
+```html
+<loquix-message-item
+  sender="assistant"
+  status="complete"
+  model="My model"
+  timestamp="10:42"
+  message-id="msg_42"
+  show-avatar
+>
+  <loquix-message-content>
+    Here is the generated answer.
+  </loquix-message-content>
+</loquix-message-item>
+```
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `sender` | `sender` | `'user' \| 'assistant' \| 'system' \| 'tool'` | `'assistant'` | Sender role and message alignment. |
+| `status` | `status` | `'streaming' \| 'complete' \| 'error' \| 'pending'` | `'complete'` | Current message lifecycle state. |
+| `model` | `model` | `string` | — | Model name shown in the header. |
+| `timestamp` | `timestamp` | `string` | — | Timestamp displayed in the header. |
+| `messageId` | `message-id` | `string` | — | Stable identifier added to action event details. |
+| `privateMode` | `private-mode` | `boolean` | `false` | Hides model information. |
+| `showAvatar` | `show-avatar` | `boolean` | `false` | Displays the avatar column. |
+| `avatarSize` | `avatar-size` | `'xs' \| 'sm' \| 'md' \| 'lg'` | `'sm'` | Size of the built-in avatar. |
+| `actionsPosition` | `actions-position` | `'bottom-start' \| 'bottom-end' \| 'inline-start' \| 'inline-end'` | `'bottom-start'` | Places the action toolbar around the bubble. |
+| `collapseHeight` | `collapse-height` | `number` | `120` | User-message height before collapsing. `0` disables collapse. |
+
+## Events
+
+Action events are enriched with this message’s `messageId` and content before they leave the component.
+
+| Event | Detail |
+| --- | --- |
+| `loquix-copy` | `{ messageId, content }` |
+| `loquix-regenerate` | `{ messageId }` |
+| `loquix-feedback` | `{ messageId, sentiment }` |
+| `loquix-edit-start` | `{ messageId, content }` |
+| `loquix-edit-submit` | `{ messageId, oldContent, newContent }` |
+| `loquix-edit-cancel` | `{ messageId }` |
+
+```js
+message.addEventListener('loquix-feedback', (event) => {
+  saveFeedback(event.detail.messageId, event.detail.sentiment);
+});
+```
+
+## Status states
+
+<LivePreview label="Pending message" compact>
+	<loquix-message-item sender="assistant" status="pending" show-avatar></loquix-message-item>
+</LivePreview>
+
+- `pending` renders a built-in typing indicator.
+- `streaming` shows slotted content when present, with a typing indicator as fallback.
+- `complete` exposes the action toolbar.
+- `error` adds an error treatment and retry action.
+
+<Aside type="tip">
+	Use a stable `message-id` when you render actions. It lets event handlers update the correct message without relying on DOM position.
+</Aside>
+
+## Slots
+
+| Slot | Purpose |
+| --- | --- |
+| `avatar` | Replaces the built-in avatar. |
+| `header` | Replaces model and timestamp metadata. |
+| `above-bubble` | Attachments or metadata above the bubble. |
+| default | Main message content. |
+| `below-bubble` | Citations, attachments, or metadata below the bubble. |
+| `actions` | Replaces the built-in message action toolbar. |
+| `footer` | Content below the message row. |
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `container` | Outer message row. |
+| `bubble-column` | Wrapper around the bubble and adjacent slots. |
+| `bubble` | Message surface. |
+| `header` | Model and timestamp row. |
+| `actions` | Action toolbar area. |
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-message-user-bg` | User bubble background. |
+| `--loquix-message-assistant-bg` | Assistant bubble background. |
+| `--loquix-message-error-border-color` | Error-state border color. |
+| `--loquix-message-gap` | Gap between avatar and bubble. |
+| `--loquix-message-bubble-radius` | Bubble corner radius. |
+| `--loquix-message-bubble-padding` | Bubble inner padding. |
+| `--loquix-message-max-width` | Maximum message row width. |

@@ -1,0 +1,133 @@
+---
+title: Installation
+description: Install Loquix, register your first Web Component, and connect its events.
+---
+
+import { Aside, Card, CardGrid, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import LivePreview from '../../components/LivePreview.astro';
+
+Loquix ships as standards-based Web Components. Use it with any modern build tool and framework, or load the pre-built browser bundle for a quick prototype.
+
+## Package installation
+
+<Tabs syncKey="package-manager">
+	<TabItem label="npm">
+
+	```sh
+	npm install @loquix/core lit
+	```
+
+	</TabItem>
+	<TabItem label="pnpm">
+
+	```sh
+	pnpm add @loquix/core lit
+	```
+
+	</TabItem>
+	<TabItem label="yarn">
+
+	```sh
+	yarn add @loquix/core lit
+	```
+
+	</TabItem>
+</Tabs>
+
+`lit` is a peer dependency. Loquix uses it internally while exposing standard custom elements to your application.
+
+## Your first component
+
+<Steps>
+
+1. **Load the design tokens.**
+
+   Import the shared variables once in your application entry point:
+
+   ```js
+   import '@loquix/core/tokens/variables.css';
+   ```
+
+2. **Register only what you use.**
+
+   A `define/*` import registers its custom element in the browser:
+
+   ```js
+   import '@loquix/core/define/define-chat-composer';
+   ```
+
+3. **Add the element to your markup.**
+
+   ```html
+   <loquix-chat-composer
+     placeholder="Ask anything…"
+     max-length="4000"
+   ></loquix-chat-composer>
+   ```
+
+4. **Listen for component events.**
+
+   Events bubble through Shadow DOM, so they can be handled on the element or a shared ancestor:
+
+   ```js
+   document.addEventListener('loquix-submit', (event) => {
+     console.log(event.detail.content);
+   });
+   ```
+
+</Steps>
+
+<LivePreview label="Your first component">
+	<loquix-chat-composer placeholder="Ask anything…" max-length="4000"></loquix-chat-composer>
+</LivePreview>
+
+## Choose an import strategy
+
+<CardGrid>
+	<Card title="Definition import" icon="add-document">
+		Use `@loquix/core/define/define-*` in most applications. It registers the custom element automatically and keeps imports explicit.
+	</Card>
+	<Card title="Class-only import" icon="seti:typescript">
+		Use `@loquix/core/classes/loquix-*` when subclassing or controlling registration yourself.
+	</Card>
+</CardGrid>
+
+```js title="Class-only import"
+import { LoquixChatComposer } from '@loquix/core/classes/loquix-chat-composer';
+
+customElements.define('my-chat-composer', LoquixChatComposer);
+```
+
+## CDN prototype
+
+For a no-build prototype, load the tokens and bundled component definitions from unpkg:
+
+```html
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/@loquix/core/src/tokens/variables.css"
+/>
+<script src="https://unpkg.com/@loquix/core/cdn/loquix.min.js"></script>
+```
+
+<Aside type="tip" title="Production recommendation">
+	Prefer package imports in production. Your bundler can cache dependencies reliably, and explicit definition imports make the components used by your page easy to audit.
+</Aside>
+
+## Framework notes
+
+Custom elements use attributes for primitive values and DOM properties for objects and arrays. Event names stay the same across frameworks.
+
+<CardGrid>
+	<Card title="Plain HTML / JavaScript">
+		Use attributes in markup and assign complex values as element properties.
+	</Card>
+	<Card title="React">
+		Use the optional `@loquix/react` wrappers for typed props and idiomatic event callbacks.
+	</Card>
+	<Card title="Vue, Svelte, Angular">
+		Use the native custom element support provided by the framework.
+	</Card>
+</CardGrid>
+
+Next, explore the [Chat Composer](/components/chat-composer/) reference.

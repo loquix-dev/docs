@@ -1,0 +1,67 @@
+---
+title: Build better AI interfaces
+description: Production-ready Web Components for chat, search, reasoning, feedback, attachments, and more.
+template: splash
+hero:
+  tagline: A framework-agnostic UI kit for the parts of AI products every team ends up building twice.
+  actions:
+    - text: Get started
+      link: /installation/
+      icon: right-arrow
+    - text: Browse components
+      link: /components/chat-composer/
+      icon: open-book
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+import LivePreview from '../../components/LivePreview.astro';
+
+<LivePreview label="A complete chat surface">
+	<div class="home-demo">
+		<loquix-message-item sender="assistant" status="complete" model="Loquix" show-avatar>
+			<loquix-message-content>
+				Everything here is a real Web Component — composable, themeable, and ready for your framework.
+			</loquix-message-content>
+		</loquix-message-item>
+		<loquix-message-item sender="user" status="complete">
+			<loquix-message-content>And it works without a framework?</loquix-message-content>
+		</loquix-message-item>
+		<loquix-chat-composer placeholder="Ask Loquix anything…"></loquix-chat-composer>
+	</div>
+</LivePreview>
+
+## One library, the whole AI surface
+
+<CardGrid stagger>
+	<Card title="Framework agnostic" icon="puzzle">
+		Standard custom elements work in React, Vue, Svelte, Angular, or plain HTML.
+	</Card>
+	<Card title="AI-native patterns" icon="star">
+		Streaming, reasoning, citations, tool calls, attachments, feedback, and search are built in.
+	</Card>
+	<Card title="Designed to adapt" icon="setting">
+		Compose with slots. Theme with CSS custom properties. Style internals through CSS parts.
+	</Card>
+	<Card title="Accessible by default" icon="approve-check">
+		Keyboard behavior, focus management, live status, and semantic controls are part of the components.
+	</Card>
+</CardGrid>
+
+## Start with the component you need
+
+Install `@loquix/core`, import a component definition, then use it like any native HTML element.
+
+```js
+import '@loquix/core/tokens/variables.css';
+import '@loquix/core/define/define-chat-composer';
+```
+
+```html
+<loquix-chat-composer
+  placeholder="Ask anything…"
+  max-length="4000"
+></loquix-chat-composer>
+```
+
+[Read the installation guide →](/installation/)

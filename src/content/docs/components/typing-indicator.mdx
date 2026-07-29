@@ -1,0 +1,88 @@
+---
+title: Typing Indicator
+description: Accessible animated status indicator for pending, thinking, and multi-step AI work.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Core component</p>
+
+`<loquix-typing-indicator>` communicates that an assistant is producing or preparing a response.
+
+<div class="component-meta">
+	<span>loquix-typing-indicator</span>
+	<span>status</span>
+	<span>accessible</span>
+</div>
+
+## Preview
+
+<LivePreview label="All variants" compact>
+	<div style="display: grid; gap: 1.25rem; justify-items: center;">
+		<loquix-typing-indicator variant="dots"></loquix-typing-indicator>
+		<loquix-typing-indicator variant="text" message="AI is typing…"></loquix-typing-indicator>
+		<loquix-typing-indicator variant="steps" message="Searching documents…"></loquix-typing-indicator>
+	</div>
+</LivePreview>
+
+## Usage
+
+```js
+import '@loquix/core/define/define-typing-indicator';
+```
+
+```html
+<loquix-typing-indicator variant="dots"></loquix-typing-indicator>
+
+<loquix-typing-indicator
+  variant="steps"
+  message="Searching documents…"
+></loquix-typing-indicator>
+```
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `variant` | `variant` | `'dots' \| 'text' \| 'steps'` | `'dots'` | Visual form of the status. |
+| `message` | `message` | `string` | localized text | Optional message for `text` and `steps`. |
+
+## Choosing a variant
+
+| Variant | Use when |
+| --- | --- |
+| `dots` | The delay is brief and no explanation is necessary. |
+| `text` | A simple human-readable status adds clarity. |
+| `steps` | The assistant is performing a named stage of longer work. |
+
+<Aside type="note" title="Accessibility">
+	The component renders a live status surface. The dots variant supplies a localized accessible label, while text variants expose their visible message.
+</Aside>
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `container` | Outer status wrapper. |
+| `dot` | Each animated dot in the `dots` variant. |
+
+```css title="A compact brand treatment"
+loquix-typing-indicator {
+  --loquix-typing-dot-size: 5px;
+  --loquix-typing-dot-color: #5b43e6;
+}
+
+loquix-typing-indicator::part(container) {
+  border-radius: 999px;
+}
+```
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-typing-bg` | Indicator background. |
+| `--loquix-typing-text-color` | Color for text and steps variants. |
+| `--loquix-typing-dot-size` | Diameter of each dot. Defaults to `6px`. |
+| `--loquix-typing-dot-color` | Dot color. |

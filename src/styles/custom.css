@@ -1,0 +1,307 @@
+@import '@loquix/core/tokens/variables.css';
+
+:root {
+	--sl-font: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+	--sl-font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+	--sl-color-accent-low: #eeeafd;
+	--sl-color-accent: #5b43e6;
+	--sl-color-accent-high: #24185e;
+	--sl-color-white: #19172a;
+	--sl-color-gray-1: #2c2941;
+	--sl-color-gray-2: #48445f;
+	--sl-color-gray-3: #6e6983;
+	--sl-color-gray-4: #aaa5b9;
+	--sl-color-gray-5: #dedbe7;
+	--sl-color-gray-6: #efedf4;
+	--sl-color-gray-7: #f8f7fb;
+	--sl-color-black: #ffffff;
+	--sl-content-width: 50rem;
+	--sl-sidebar-width: 18rem;
+
+	--loquix-ai-color: #5b43e6;
+	--loquix-primary-color: #5b43e6;
+	--loquix-message-user-bg: #eeeafd;
+	--loquix-message-assistant-bg: #ffffff;
+	--loquix-message-bubble-radius: 18px;
+	--loquix-input-border-radius: 16px;
+	--loquix-composer-container-border-radius: 18px;
+	--loquix-send-button-bg: #5b43e6;
+}
+
+:root[data-theme='dark'] {
+	--sl-color-accent-low: #292151;
+	--sl-color-accent: #b8a8ff;
+	--sl-color-accent-high: #f0edff;
+	--sl-color-white: #f7f5ff;
+	--sl-color-gray-1: #e7e2f4;
+	--sl-color-gray-2: #c4bdd5;
+	--sl-color-gray-3: #918aa5;
+	--sl-color-gray-4: #5f596f;
+	--sl-color-gray-5: #393445;
+	--sl-color-gray-6: #292531;
+	--sl-color-gray-7: #201d27;
+	--sl-color-black: #17151c;
+
+	--loquix-text-color: #f7f5ff;
+	--loquix-text-muted-color: #a9a2b9;
+	--loquix-message-user-bg: #3a2f68;
+	--loquix-message-assistant-bg: #25222c;
+	--loquix-composer-bg: transparent;
+	--loquix-composer-container-bg: #25222c;
+	--loquix-composer-container-border-color: #494252;
+	--loquix-input-bg: transparent;
+	--loquix-input-color: #f7f5ff;
+}
+
+body {
+	background-image:
+		radial-gradient(circle at 12% 0%, rgb(91 67 230 / 7%), transparent 26rem),
+		radial-gradient(circle at 92% 8%, rgb(241 132 96 / 7%), transparent 22rem);
+	background-attachment: fixed;
+}
+
+header.header {
+	border-bottom: 1px solid color-mix(in srgb, var(--sl-color-gray-5), transparent 30%);
+	backdrop-filter: blur(18px);
+	background: color-mix(in srgb, var(--sl-color-black), transparent 12%);
+}
+
+.site-title {
+	font-weight: 760;
+	letter-spacing: -0.035em;
+}
+
+.site-title::before {
+	display: grid;
+	place-items: center;
+	width: 1.85rem;
+	height: 1.85rem;
+	margin-inline-end: 0.55rem;
+	border-radius: 0.65rem;
+	background: linear-gradient(145deg, #725cf0, #4c34cc);
+	box-shadow: 0 8px 20px rgb(76 52 204 / 28%);
+	color: white;
+	content: "L";
+	font-size: 0.88rem;
+	font-weight: 800;
+}
+
+.sidebar-pane {
+	background: color-mix(in srgb, var(--sl-color-gray-7), transparent 20%);
+}
+
+.sidebar-content a[aria-current='page'] {
+	border-radius: 0.65rem;
+	font-weight: 650;
+}
+
+.sl-markdown-content h1,
+.sl-markdown-content h2,
+.sl-markdown-content h3 {
+	letter-spacing: -0.03em;
+}
+
+.sl-markdown-content h2 {
+	margin-top: 3.5rem;
+}
+
+.sl-markdown-content a:not([class]) {
+	text-underline-offset: 0.2em;
+}
+
+.sl-markdown-content code:not(pre code) {
+	border: 1px solid color-mix(in srgb, var(--sl-color-gray-5), transparent 25%);
+	border-radius: 0.42rem;
+	padding: 0.12rem 0.35rem;
+}
+
+.sl-markdown-content table {
+	display: table;
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0;
+	overflow: hidden;
+	border: 1px solid var(--sl-color-gray-5);
+	border-radius: 0.8rem;
+	font-size: 0.875rem;
+}
+
+.sl-markdown-content th {
+	background: color-mix(in srgb, var(--sl-color-gray-6), transparent 15%);
+	font-size: 0.75rem;
+	letter-spacing: 0.055em;
+	text-transform: uppercase;
+}
+
+.sl-markdown-content th,
+.sl-markdown-content td {
+	padding: 0.8rem 0.9rem;
+	border-bottom: 1px solid var(--sl-color-gray-5);
+}
+
+.sl-markdown-content tr:last-child td {
+	border-bottom: 0;
+}
+
+.hero {
+	padding-block: clamp(5rem, 13vw, 9rem);
+}
+
+.hero .sl-flex {
+	gap: 1.15rem;
+}
+
+.hero h1 {
+	max-width: 12ch;
+	background: linear-gradient(110deg, var(--sl-color-white) 5%, #6950e8 72%, #ec795f);
+	background-clip: text;
+	color: transparent;
+	font-size: clamp(3.25rem, 8vw, 6.7rem);
+	font-weight: 780;
+	letter-spacing: -0.07em;
+	line-height: 0.92;
+}
+
+.hero .tagline {
+	max-width: 38rem;
+	color: var(--sl-color-gray-2);
+	font-size: clamp(1.05rem, 2vw, 1.28rem);
+	line-height: 1.6;
+}
+
+.hero .action {
+	border-radius: 0.72rem;
+	font-weight: 680;
+}
+
+.card {
+	border-radius: 1rem;
+	border-color: color-mix(in srgb, var(--sl-color-gray-5), transparent 15%);
+	background: color-mix(in srgb, var(--sl-color-black), transparent 10%);
+	box-shadow: 0 14px 40px rgb(42 31 97 / 5%);
+}
+
+.loquix-preview {
+	margin: 1.6rem 0 2rem;
+	overflow: hidden;
+	border: 1px solid var(--sl-color-gray-5);
+	border-radius: 1rem;
+	background: var(--sl-color-black);
+	box-shadow: 0 18px 50px rgb(37 29 78 / 8%);
+}
+
+.loquix-preview__bar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 0.7rem 0.9rem;
+	border-bottom: 1px solid var(--sl-color-gray-5);
+	background: color-mix(in srgb, var(--sl-color-gray-7), transparent 15%);
+	color: var(--sl-color-gray-2);
+	font-size: 0.72rem;
+	font-weight: 650;
+	letter-spacing: 0.035em;
+	text-transform: uppercase;
+}
+
+.loquix-preview__status {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.45rem;
+	color: var(--sl-color-gray-3);
+}
+
+.loquix-preview__status i {
+	width: 0.45rem;
+	height: 0.45rem;
+	border-radius: 50%;
+	background: #30b76c;
+	box-shadow: 0 0 0 4px rgb(48 183 108 / 12%);
+}
+
+.loquix-preview__canvas {
+	display: grid;
+	align-items: center;
+	min-height: 15rem;
+	padding: clamp(1.2rem, 5vw, 3.5rem);
+	background:
+		linear-gradient(var(--sl-color-gray-6) 1px, transparent 1px),
+		linear-gradient(90deg, var(--sl-color-gray-6) 1px, transparent 1px);
+	background-color: color-mix(in srgb, var(--sl-color-black), var(--sl-color-gray-7) 24%);
+	background-size: 24px 24px;
+}
+
+.loquix-preview--compact .loquix-preview__canvas {
+	min-height: 9rem;
+}
+
+.loquix-preview loquix-chat-composer,
+.loquix-preview loquix-message-item {
+	width: min(100%, 40rem);
+	margin-inline: auto;
+}
+
+.loquix-preview loquix-typing-indicator {
+	justify-self: center;
+}
+
+.component-kicker {
+	margin-bottom: -0.6rem;
+	color: var(--sl-color-accent);
+	font-size: 0.76rem;
+	font-weight: 760;
+	letter-spacing: 0.09em;
+	text-transform: uppercase;
+}
+
+.component-meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.55rem;
+	margin: 1rem 0 1.5rem;
+}
+
+.component-meta span {
+	padding: 0.32rem 0.6rem;
+	border: 1px solid var(--sl-color-gray-5);
+	border-radius: 999px;
+	background: var(--sl-color-gray-7);
+	color: var(--sl-color-gray-2);
+	font-family: var(--sl-font-mono);
+	font-size: 0.72rem;
+}
+
+.home-demo {
+	display: grid;
+	gap: 0.85rem;
+	width: min(100%, 42rem);
+	margin-inline: auto;
+}
+
+.home-demo loquix-message-item:first-child {
+	max-width: 90%;
+}
+
+.home-demo loquix-chat-composer {
+	margin-top: 0.45rem;
+}
+
+@media (max-width: 50rem) {
+	.hero {
+		padding-block: 3.6rem;
+	}
+
+	.hero h1 {
+		font-size: clamp(3rem, 17vw, 4.6rem);
+	}
+
+	.loquix-preview__canvas {
+		padding: 1rem;
+	}
+
+	.sl-markdown-content table {
+		display: block;
+		overflow-x: auto;
+	}
+}
