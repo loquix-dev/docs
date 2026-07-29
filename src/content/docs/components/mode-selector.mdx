@@ -1,0 +1,131 @@
+---
+title: Mode Selector
+description: Data-driven selector for AI modes with tabs, pills, toggle, and dropdown variants.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Configuration component</p>
+
+`<loquix-mode-selector>` switches between application-defined AI operating modes without coupling the interface to a model provider.
+
+<div class="component-meta">
+	<span>loquix-mode-selector</span>
+	<span>four variants</span>
+	<span>keyboard accessible</span>
+</div>
+
+## Preview
+
+<LivePreview label="Mode pills" compact>
+	<div style="display: grid; place-items: center; width: 100%;">
+		<loquix-mode-selector
+			data-demo
+			variant="pills"
+			value="chat"
+			show-description
+		></loquix-mode-selector>
+	</div>
+</LivePreview>
+
+## Usage
+
+```js
+import '@loquix/core/define/define-mode-selector';
+```
+
+```html
+<loquix-mode-selector
+  variant="tabs"
+  value="chat"
+  show-description
+></loquix-mode-selector>
+```
+
+```js
+const selector = document.querySelector('loquix-mode-selector');
+
+selector.modes = [
+  {
+    value: 'chat',
+    label: 'Chat',
+    icon: '💬',
+    description: 'General conversation',
+  },
+  {
+    value: 'research',
+    label: 'Research',
+    icon: '🔍',
+    description: 'Deep analysis',
+  },
+];
+
+selector.addEventListener('loquix-mode-change', (event) => {
+  console.log(event.detail.from, event.detail.to);
+});
+```
+
+## Mode shape
+
+```ts
+interface ModeOption {
+  value: string;
+  label: string;
+  icon?: string;
+  description?: string;
+}
+```
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `modes` | — | `ModeOption[]` | `[]` | Available modes. Assign as a DOM property. |
+| `value` | `value` | `string` | `''` | Selected mode value. |
+| `variant` | `variant` | `'tabs' \| 'dropdown' \| 'pills' \| 'toggle'` | `'tabs'` | Selector presentation. |
+| `showDescription` | `show-description` | `boolean` | `false` | Displays descriptions for supported variants. |
+| `stacked` | `stacked` | `boolean` | `false` | Places descriptions below labels in tabs and pills. |
+| `disabled` | `disabled` | `boolean` | `false` | Disables selection. |
+| `open` | `open` | `boolean` | `false` | Controls the panel for the dropdown variant. |
+
+## Events
+
+| Event | Detail |
+| --- | --- |
+| `loquix-mode-change` | `{ from: string, to: string }` |
+
+## Public methods
+
+Dropdown mode also exposes `show()`, `hide()`, and `toggle()` for programmatic control.
+
+<Aside type="tip">
+	Use `toggle` for exactly two compact choices. Tabs and pills work well for a small mode set; use the dropdown when space is limited or the list is longer.
+</Aside>
+
+## CSS parts
+
+| Part | Variant | Purpose |
+| --- | --- | --- |
+| `tabs` | tabs, pills | Options container. |
+| `tab` | tabs, pills | Individual option. |
+| `toggle` | toggle | Toggle container. |
+| `toggle-option` | toggle | Individual toggle option. |
+| `trigger` | dropdown | Selected-value button. |
+| `panel` | dropdown | Dropdown surface. |
+| `option` | dropdown | Dropdown option. |
+
+## Common CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-mode-tab-gap` | Gap between tabs or pills. |
+| `--loquix-mode-tab-padding` | Option padding. |
+| `--loquix-mode-tab-radius` | Tab corner radius. |
+| `--loquix-mode-tab-active-bg` | Selected option background. |
+| `--loquix-mode-tab-active-color` | Selected option color. |
+| `--loquix-mode-pill-radius` | Pill corner radius. |
+| `--loquix-mode-toggle-bg` | Toggle track background. |
+| `--loquix-mode-toggle-active-bg` | Selected toggle background. |
+| `--loquix-mode-dropdown-panel-bg` | Dropdown surface background. |
+| `--loquix-mode-dropdown-min-width` | Minimum dropdown width. |

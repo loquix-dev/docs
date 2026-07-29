@@ -240,7 +240,12 @@ header.header {
 .loquix-preview loquix-chat-composer,
 .loquix-preview loquix-chat-container,
 .loquix-preview loquix-chat-header,
+.loquix-preview loquix-generation-controls,
+.loquix-preview loquix-message-actions,
+.loquix-preview loquix-message-content,
 .loquix-preview loquix-message-item,
+.loquix-preview loquix-message-list,
+.loquix-preview loquix-mode-selector,
 .loquix-preview loquix-prompt-input,
 .loquix-preview loquix-reasoning-block,
 .loquix-preview loquix-suggestion-chips {

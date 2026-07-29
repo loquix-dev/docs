@@ -1,0 +1,88 @@
+---
+title: Message Avatar
+description: Participant avatar with image, initials, size presets, and animated activity states.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Core component</p>
+
+`<loquix-message-avatar>` represents a chat participant with an image, derived initials, or the built-in assistant icon.
+
+<div class="component-meta">
+	<span>loquix-message-avatar</span>
+	<span>accessible</span>
+	<span>state-aware</span>
+</div>
+
+## Preview
+
+<LivePreview label="Avatar states" compact>
+	<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 1.25rem;">
+		<loquix-message-avatar variant="initials" name="Ada Lovelace" size="lg"></loquix-message-avatar>
+		<loquix-message-avatar variant="icon" state="thinking" size="md"></loquix-message-avatar>
+		<loquix-message-avatar variant="animated" state="streaming" size="lg"></loquix-message-avatar>
+		<loquix-message-avatar variant="icon" state="error" size="sm"></loquix-message-avatar>
+	</div>
+</LivePreview>
+
+## Usage
+
+```js
+import '@loquix/core/define/define-message-avatar';
+```
+
+```html
+<loquix-message-avatar
+  variant="initials"
+  name="Ada Lovelace"
+  size="md"
+></loquix-message-avatar>
+
+<loquix-message-avatar
+  variant="icon"
+  state="thinking"
+></loquix-message-avatar>
+```
+
+## Rendering priority
+
+The component chooses its visible content in this order:
+
+1. `src` renders an image.
+2. `name` derives one or two initials.
+3. Otherwise the built-in assistant icon is shown.
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `src` | `src` | `string` | — | Image URL. |
+| `name` | `name` | `string` | — | Accessible name and source for initials. |
+| `state` | `state` | `'idle' \| 'thinking' \| 'streaming' \| 'error'` | `'idle'` | Participant activity state. Thinking and streaming animate the pulse ring. |
+| `size` | `size` | `'xs' \| 'sm' \| 'md' \| 'lg'` | `'md'` | Avatar size preset. |
+| `variant` | `variant` | `'icon' \| 'image' \| 'initials' \| 'animated'` | `'icon'` | Visual variant hint. Actual content follows the priority above. |
+
+<Aside type="tip">
+	Set `name` even when using `src`. It becomes the image alternative text and keeps the avatar understandable if the image cannot be displayed.
+</Aside>
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `container` | Outer avatar circle. |
+| `image` | Image element when `src` is present. |
+| `initials` | Initials text when `name` is present without `src`. |
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-avatar-bg` | Avatar background. |
+| `--loquix-avatar-color` | Foreground and icon color. |
+| `--loquix-avatar-pulse-color` | Activity ring color. |
+| `--loquix-avatar-size-sm` | Small preset size. |
+| `--loquix-avatar-size-md` | Medium preset size. |
+| `--loquix-avatar-size-lg` | Large preset size. |

@@ -1,0 +1,114 @@
+---
+title: Message List
+description: Scrollable chat history with auto-scroll, empty states, loading content, and navigation helpers.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Core component</p>
+
+`<loquix-message-list>` owns the scrollable message history. It follows new content until the reader scrolls away and can reveal a return-to-bottom control.
+
+<div class="component-meta">
+	<span>loquix-message-list</span>
+	<span>auto-scroll</span>
+	<span>slot-based</span>
+</div>
+
+## Preview
+
+<LivePreview label="Scrollable conversation">
+	<div style="width: min(100%, 38rem); height: 18rem; margin-inline: auto;">
+		<loquix-message-list auto-scroll show-scroll-anchor>
+			<loquix-message-item sender="user" status="complete" message-id="question">
+				<loquix-message-content>How should I structure a chat timeline?</loquix-message-content>
+			</loquix-message-item>
+			<loquix-message-item sender="assistant" status="complete" model="Loquix" message-id="answer">
+				<loquix-message-content>
+					Keep messages composable, let the list own scrolling, and preserve stable message IDs for navigation.
+				</loquix-message-content>
+			</loquix-message-item>
+			<loquix-message-item sender="user" status="complete">
+				<loquix-message-content>That keeps the responsibilities nicely separated.</loquix-message-content>
+			</loquix-message-item>
+		</loquix-message-list>
+	</div>
+</LivePreview>
+
+## Usage
+
+```js
+import '@loquix/core/define/define-message-list';
+import '@loquix/core/define/define-message-item';
+```
+
+```html
+<loquix-message-list auto-scroll show-scroll-anchor>
+  <loquix-message-item
+    sender="assistant"
+    status="complete"
+    message-id="msg_42"
+  >
+    Your message content
+  </loquix-message-item>
+</loquix-message-list>
+```
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `autoScroll` | `auto-scroll` | `boolean` | `true` | Follows new content while the reader remains at the bottom. |
+| `virtualize` | `virtualize` | `boolean` | `false` | Reserved for virtual scrolling; currently a no-op. |
+| `showTimestamps` | `show-timestamps` | `boolean` | `false` | Exposes the list-level timestamp preference. |
+| `showScrollAnchor` | `show-scroll-anchor` | `boolean` | `true` | Shows a return-to-bottom button after scrolling away. |
+| `scrollOnSend` | `scroll-on-send` | `boolean` | `true` | Scrolls to the bottom when a `loquix-submit` event is detected. |
+
+## Events
+
+| Event | Detail | When it fires |
+| --- | --- | --- |
+| `loquix-scroll-bottom` | `{}` | The scroll position reaches the bottom. |
+| `loquix-scroll-away` | `{ scrollTop: number }` | The reader moves away from the bottom. |
+
+```js
+list.addEventListener('loquix-scroll-away', (event) => {
+  console.log('Reader position:', event.detail.scrollTop);
+});
+```
+
+## Methods
+
+| Method | Description |
+| --- | --- |
+| `scrollToBottom(behavior?)` | Scrolls to the newest content. Accepts a `ScrollBehavior` and defaults to `'smooth'`. |
+| `scrollToMessage(messageId)` | Finds a slotted element by `message-id`, scrolls to it, and returns whether it was found. |
+
+<Aside type="tip">
+	Keep `auto-scroll` enabled for streaming conversations. The list stops following content after a manual scroll, so reading older messages is not interrupted.
+</Aside>
+
+## Slots
+
+| Slot | Purpose |
+| --- | --- |
+| default | Message elements. |
+| `empty-state` | Content displayed when there are no messages. |
+| `loading` | Loading content shown above the message slot. |
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `list` | Outer list wrapper. |
+| `scroll-container` | Inner scrolling region. |
+| `scroll-anchor` | Return-to-bottom control. |
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-message-gap` | Gap between messages. |
+| `--loquix-message-list-bg` | Message list background. |
+| `--loquix-message-list-padding` | Padding inside the scrolling region. |

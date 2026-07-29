@@ -1,0 +1,101 @@
+---
+title: Message Actions
+description: Contextual copy, regenerate, feedback, and edit controls for chat messages.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Core component</p>
+
+`<loquix-message-actions>` renders a role-aware toolbar for common message operations. Use its defaults or replace them with any slotted controls.
+
+<div class="component-meta">
+	<span>loquix-message-actions</span>
+	<span>role-aware</span>
+	<span>customizable</span>
+</div>
+
+## Preview
+
+<LivePreview label="Default action sets" compact>
+	<div style="display: grid; gap: 1.25rem; justify-items: center;">
+		<div style="display: grid; gap: 0.35rem; justify-items: center;">
+			<small>Assistant</small>
+			<loquix-message-actions message-role="assistant" position="always"></loquix-message-actions>
+		</div>
+		<div style="display: grid; gap: 0.35rem; justify-items: center;">
+			<small>User</small>
+			<loquix-message-actions message-role="user" position="always"></loquix-message-actions>
+		</div>
+	</div>
+</LivePreview>
+
+## Usage
+
+```js
+import '@loquix/core/define/define-message-actions';
+```
+
+```html
+<loquix-message-actions
+  message-role="assistant"
+  position="always"
+></loquix-message-actions>
+```
+
+The assistant preset includes copy, regenerate, and positive or negative feedback. The user preset contains edit; system and tool roles fall back to copy.
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `direction` | `direction` | `'horizontal' \| 'vertical'` | `'horizontal'` | Toolbar layout direction. |
+| `position` | `position` | `'hover' \| 'always' \| 'on-complete'` | `'hover'` | Visibility behavior expected by the containing message. |
+| `messageRole` | `message-role` | `'user' \| 'assistant' \| 'system' \| 'tool'` | — | Selects the default action set. |
+
+## Events
+
+Events from the default child controls bubble through the toolbar.
+
+| Event | Detail |
+| --- | --- |
+| `loquix-copy` | Copy action detail from the child control. |
+| `loquix-regenerate` | Regenerate action detail from the child control. |
+| `loquix-feedback` | Includes the selected feedback `sentiment`. |
+| `loquix-edit` | Edit action detail from the child control. |
+
+```js
+actions.addEventListener('loquix-feedback', (event) => {
+  saveFeedback(event.detail.sentiment);
+});
+```
+
+<Aside type="note">
+	When the toolbar is used through `<loquix-message-item>`, the parent enriches action events with the message ID and content.
+</Aside>
+
+## Slots
+
+| Slot | Purpose |
+| --- | --- |
+| default | Replaces the complete default action set. |
+
+```html
+<loquix-message-actions position="always">
+  <loquix-action-copy></loquix-action-copy>
+  <loquix-action-feedback sentiment="positive"></loquix-action-feedback>
+</loquix-message-actions>
+```
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `toolbar` | The action toolbar wrapper. |
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-actions-gap` | Gap between action controls. |

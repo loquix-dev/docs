@@ -1,0 +1,97 @@
+---
+title: Message Content
+description: Text and code content renderer with safe code output and optional streaming cursors.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Core component</p>
+
+`<loquix-message-content>` renders the body of a message. Use it for regular rich text or pass a raw string to its safe code-block renderer.
+
+<div class="component-meta">
+	<span>loquix-message-content</span>
+	<span>streaming-aware</span>
+	<span>code-safe</span>
+</div>
+
+## Preview
+
+<LivePreview label="Text and code">
+	<div style="display: grid; gap: 1.25rem; width: min(100%, 38rem); margin-inline: auto;">
+		<loquix-message-content type="text" streaming streaming-cursor="caret">
+			Streaming content can end with a lightweight caret while tokens arrive.
+		</loquix-message-content>
+		<loquix-message-content
+			type="code"
+			code={"const answer = await assistant.reply(prompt);"}
+		></loquix-message-content>
+	</div>
+</LivePreview>
+
+## Usage
+
+```js
+import '@loquix/core/define/define-message-content';
+```
+
+```html
+<loquix-message-content
+  type="text"
+  streaming
+  streaming-cursor="caret"
+>
+  The answer is still arriving…
+</loquix-message-content>
+```
+
+For code, assign the source as a property so it is rendered as text rather than interpreted as markup:
+
+```js
+const content = document.querySelector('loquix-message-content');
+content.type = 'code';
+content.code = `function greet(name) {
+  return \`Hello, ${name}!\`;
+}`;
+```
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `type` | `type` | `'text' \| 'code' \| 'image' \| 'file' \| 'tool-result'` | `'text'` | Selects the content renderer. Text is the fallback for every non-code value. |
+| `streaming` | `streaming` | `boolean` | `false` | Marks content as actively streaming. |
+| `streamingCursor` | `streaming-cursor` | `'none' \| 'caret' \| 'block'` | `'none'` | Cursor displayed after streaming content. |
+| `allowInlineActions` | `allow-inline-actions` | `boolean` | `false` | Signals that inline action controls are allowed. |
+| `code` | `code` | `string` | — | Raw code rendered safely when `type="code"`. Prefer assigning it as a property. |
+
+<Aside type="note">
+	`image`, `file`, and `tool-result` currently use the text renderer. They provide semantic type information for applications and future specialized rendering.
+</Aside>
+
+## Slots
+
+| Slot | Purpose |
+| --- | --- |
+| default | Text or rich HTML content when `type="text"`. |
+
+The default slot is not rendered in code mode; use the `code` property instead.
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `content` | Text content wrapper. |
+| `code-block` | The `<pre>` element in code mode. |
+| `cursor` | Streaming caret or block. |
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-message-font-size` | Message text size. |
+| `--loquix-message-line-height` | Message line height. |
+| `--loquix-code-font-family` | Code block font family. |
+| `--loquix-surface-secondary-bg` | Code block background. |
+| `--loquix-cursor-color` | Streaming cursor color. |

@@ -1,0 +1,90 @@
+---
+title: Generation Controls
+description: Stop, pause, and resume controls driven by the current AI generation state.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Core component</p>
+
+`<loquix-generation-controls>` maps generation state to the right set of controls and emits framework-neutral events for your orchestration layer.
+
+<div class="component-meta">
+	<span>loquix-generation-controls</span>
+	<span>state-driven</span>
+	<span>accessible toolbar</span>
+</div>
+
+## Preview
+
+<LivePreview label="Running and paused states" compact>
+	<div style="display: grid; gap: 1.25rem; justify-items: center;">
+		<loquix-generation-controls state="running" show-pause></loquix-generation-controls>
+		<loquix-generation-controls state="paused"></loquix-generation-controls>
+	</div>
+</LivePreview>
+
+## Usage
+
+```js
+import '@loquix/core/define/define-generation-controls';
+```
+
+```html
+<loquix-generation-controls
+  state="running"
+  show-pause
+></loquix-generation-controls>
+```
+
+```js
+controls.addEventListener('loquix-stop', () => generation.abort());
+controls.addEventListener('loquix-pause', () => generation.pause());
+controls.addEventListener('loquix-resume', () => generation.resume());
+```
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `state` | `state` | `'idle' \| 'running' \| 'paused' \| 'complete' \| 'error'` | `'idle'` | Controls which buttons are visible. |
+| `showPause` | `show-pause` | `boolean` | `false` | Adds Pause next to Stop while running. |
+| `showSkip` | `show-skip` | `boolean` | `false` | Reserved for a future Skip control. |
+
+## State behavior
+
+| State | Visible controls |
+| --- | --- |
+| `running` | Stop, plus Pause when `show-pause` is set. |
+| `paused` | Resume. |
+| `idle`, `complete`, `error` | Nothing is rendered. |
+
+## Events
+
+| Event | Detail | Trigger |
+| --- | --- | --- |
+| `loquix-stop` | `{}` | Stop button click. |
+| `loquix-pause` | `{}` | Pause button click. |
+| `loquix-resume` | `{}` | Resume button click. |
+
+<Aside type="tip">
+	Treat `state` as application state. Update it after your generation controller accepts the command so the visible controls always match the real request lifecycle.
+</Aside>
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `controls` | Outer toolbar. |
+| `button` | Every control button. |
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-gen-controls-gap` | Gap between controls. |
+| `--loquix-gen-button-bg` | Default button background. |
+| `--loquix-gen-button-color` | Default button text color. |
+| `--loquix-gen-stop-bg` | Stop button background. |
+| `--loquix-gen-stop-color` | Stop button text color. |
