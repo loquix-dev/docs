@@ -1,0 +1,114 @@
+---
+title: Drop Zone
+description: File drag-and-drop wrapper with filtering, a branded overlay, and framework-neutral events.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Configuration component</p>
+
+`<loquix-drop-zone>` turns any surface into a file drop target. It leaves the wrapped content usable, reveals an overlay only during a file drag, and emits accepted `File` objects.
+
+<div class="component-meta">
+	<span>loquix-drop-zone</span>
+	<span>accept filtering</span>
+	<span>content wrapper</span>
+</div>
+
+## Preview
+
+<LivePreview label="Document drop target">
+	<loquix-drop-zone accept=".pdf,image/*" label="Drop a PDF or image">
+		<div style="display: grid; place-items: center; min-height: 12rem; padding: 2rem; border: 1px dashed var(--sl-color-gray-4); border-radius: 1rem; text-align: center;">
+			<div>
+				<strong>Attach source material</strong>
+				<p style="margin: 0.45rem 0 0; color: var(--sl-color-gray-2);">Drag a PDF or image over this area to reveal the Loquix overlay.</p>
+			</div>
+		</div>
+	</loquix-drop-zone>
+</LivePreview>
+
+## Usage
+
+```js
+import '@loquix/core/define/define-drop-zone';
+```
+
+```html
+<loquix-drop-zone
+  accept=".pdf,image/*"
+  label="Drop a PDF or image"
+>
+  <section>Your existing composer or upload UI</section>
+</loquix-drop-zone>
+```
+
+```js
+dropZone.addEventListener('loquix-drop', (event) => {
+  uploadFiles(event.detail.files);
+});
+```
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `disabled` | `disabled` | `boolean` | `false` | Disables file drag handling and the overlay. |
+| `label` | `label` | `string` | localized text | Overlay instruction. |
+| `accept` | `accept` | `string` | `''` | Comma-separated MIME types, wildcards, or extensions. |
+| `multiple` | `multiple` | `boolean` | `true` | Allows every accepted file rather than only the first. |
+| `overlayInset` | `overlay-inset` | `string` | — | CSS inset shorthand for positioning the overlay. |
+
+To accept only one file, set the DOM property because boolean HTML attributes cannot represent `false`:
+
+```js
+dropZone.multiple = false;
+```
+
+## Accept filtering
+
+| Pattern | Example | Matches |
+| --- | --- | --- |
+| Extension | `.pdf` | Files ending in `.pdf`. |
+| Exact MIME type | `application/pdf` | Files with that MIME type. |
+| MIME wildcard | `image/*` | Every image MIME type. |
+| Allow all | `*` or `*/*` | Every file. |
+
+## Events
+
+| Event | Detail |
+| --- | --- |
+| `loquix-drop` | `{ files: File[] }` |
+
+<Aside type="note">
+	The drop zone filters browser-provided files but does not upload or persist them. Perform size limits, security checks, and upload handling in your application.
+</Aside>
+
+## Slots
+
+| Slot | Purpose |
+| --- | --- |
+| default | Any content that should become a drop target. |
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `overlay` | Drag-active overlay. |
+| `icon` | Built-in plus icon. |
+| `label` | Overlay instruction text. |
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-drop-zone-overlay-inset` | Overlay position inset. |
+| `--loquix-drop-zone-border-radius` | Overlay corner radius. |
+| `--loquix-drop-zone-border-color` | Dashed border color. |
+| `--loquix-drop-zone-bg` | Overlay background. |
+| `--loquix-drop-zone-overlay-blur` | Backdrop blur. |
+| `--loquix-drop-zone-content-blur` | Blur applied to wrapped content while dragging. |
+| `--loquix-drop-zone-content-opacity` | Wrapped-content opacity while dragging. |
+| `--loquix-drop-zone-icon-size` | Overlay icon size. |
+| `--loquix-drop-zone-color` | Overlay icon and label color. |

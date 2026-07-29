@@ -1,0 +1,85 @@
+---
+title: Composer Toolbar
+description: Two-sided toolbar for model controls, permissions, settings, and other composer actions.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Configuration component</p>
+
+`<loquix-composer-toolbar>` provides a stable left/right layout for controls placed above or below a chat composer.
+
+<div class="component-meta">
+	<span>loquix-composer-toolbar</span>
+	<span>two-sided</span>
+	<span>slot-based</span>
+</div>
+
+## Preview
+
+<LivePreview label="Composer controls" compact>
+	<loquix-composer-toolbar border="bottom">
+		<div slot="actions-left" style="display: flex; align-items: center; gap: 0.5rem;">
+			<span style="font-weight: 650;">Atlas Pro</span>
+			<span style="color: var(--sl-color-gray-2); font-size: 0.8rem;">Private</span>
+		</div>
+		<div slot="actions-right" style="display: flex; align-items: center; gap: 0.5rem;">
+			<button type="button" style="border: 0; background: transparent; color: inherit; cursor: pointer;">Settings</button>
+		</div>
+	</loquix-composer-toolbar>
+</LivePreview>
+
+## Usage
+
+```js
+import '@loquix/core/define/define-composer-toolbar';
+```
+
+```html
+<loquix-composer-toolbar border="bottom">
+  <loquix-model-selector
+    slot="actions-left"
+    value="atlas-pro"
+  ></loquix-model-selector>
+
+  <button slot="actions-right" type="button">
+    Settings
+  </button>
+</loquix-composer-toolbar>
+```
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `border` | `border` | `'none' \| 'top' \| 'bottom'` | `'none'` | Adds a separator on the selected edge. |
+
+## Slots
+
+| Slot | Purpose |
+| --- | --- |
+| `actions-left` | Model selection, permissions, modes, or other leading controls. |
+| `actions-right` | Settings, branching, or other trailing controls. |
+
+<Aside type="note">
+	The toolbar has no default slot. Assign every child to `actions-left` or `actions-right`.
+</Aside>
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `toolbar` | Outer layout wrapper. |
+| `left` | Left-aligned control group. |
+| `right` | Right-aligned control group. |
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-composer-toolbar-padding` | Toolbar padding. |
+| `--loquix-composer-toolbar-gap` | Space between the left and right groups. |
+| `--loquix-composer-toolbar-item-gap` | Gap between items within each group. |
+| `--loquix-composer-toolbar-min-height` | Minimum toolbar height. |
+| `--loquix-composer-toolbar-border-color` | Separator color. |

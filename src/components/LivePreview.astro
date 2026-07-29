@@ -18,12 +18,17 @@ const { label = 'Preview', compact = false } = Astro.props;
 </div>
 
 <script>
+	import '@loquix/core/define/define-attachment-chip';
 	import '@loquix/core/define/define-chat-container';
 	import '@loquix/core/define/define-chat-header';
 	import '@loquix/core/define/define-chat-composer';
+	import '@loquix/core/define/define-composer-toolbar';
+	import '@loquix/core/define/define-drop-zone';
+	import '@loquix/core/define/define-follow-up-suggestions';
 	import '@loquix/core/define/define-generation-controls';
 	import '@loquix/core/define/define-message-actions';
 	import '@loquix/core/define/define-message-avatar';
+	import '@loquix/core/define/define-message-attachments';
 	import '@loquix/core/define/define-message-content';
 	import '@loquix/core/define/define-message-item';
 	import '@loquix/core/define/define-message-list';
@@ -33,6 +38,7 @@ const { label = 'Preview', compact = false } = Astro.props;
 	import '@loquix/core/define/define-reasoning-block';
 	import '@loquix/core/define/define-suggestion-chips';
 	import '@loquix/core/define/define-typing-indicator';
+	import '@loquix/core/define/define-welcome-screen';
 
 	const suggestions = [
 		{ id: 'write', text: 'Write a launch post', icon: '✍️' },
@@ -74,8 +80,51 @@ const { label = 'Preview', compact = false } = Astro.props;
 		{ value: 'build', label: 'Build', icon: '⌘', description: 'Code generation' },
 	];
 
+	const attachments = [
+		{
+			id: 'brief',
+			filename: 'product-brief.pdf',
+			filetype: 'application/pdf',
+			size: 245000,
+			status: 'complete',
+		},
+		{
+			id: 'data',
+			filename: 'research-data.csv',
+			filetype: 'csv',
+			size: 52000,
+			status: 'complete',
+		},
+		{
+			id: 'prototype',
+			filename: 'prototype.tsx',
+			filetype: 'tsx',
+			size: 18400,
+			status: 'complete',
+		},
+		{
+			id: 'notes',
+			filename: 'interview-notes.md',
+			filetype: 'md',
+			size: 8600,
+			status: 'complete',
+		},
+	];
+
 	document.querySelectorAll('loquix-suggestion-chips[data-demo]').forEach((element) => {
 		(element as HTMLElement & { suggestions: typeof suggestions }).suggestions = suggestions;
+	});
+
+	document.querySelectorAll('loquix-follow-up-suggestions[data-demo]').forEach((element) => {
+		(element as HTMLElement & { suggestions: typeof suggestions }).suggestions = suggestions;
+	});
+
+	document.querySelectorAll('loquix-welcome-screen[data-demo]').forEach((element) => {
+		(element as HTMLElement & { suggestions: typeof suggestions }).suggestions = suggestions;
+	});
+
+	document.querySelectorAll('loquix-message-attachments[data-demo]').forEach((element) => {
+		(element as HTMLElement & { attachments: typeof attachments }).attachments = attachments;
 	});
 
 	document.querySelectorAll('loquix-model-selector[data-demo]').forEach((element) => {

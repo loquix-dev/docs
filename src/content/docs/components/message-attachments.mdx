@@ -1,0 +1,137 @@
+---
+title: Message Attachments
+description: Responsive attachment cards for files and image previews inside a message.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Configuration component</p>
+
+`<loquix-message-attachments>` displays a collection of files as visual cards inside a message, with size presets, safe image previews, removal, and overflow handling.
+
+<div class="component-meta">
+	<span>loquix-message-attachments</span>
+	<span>data-driven</span>
+	<span>responsive cards</span>
+</div>
+
+## Preview
+
+<LivePreview label="Attachment collection" compact>
+	<loquix-message-attachments
+		data-demo
+		size="md"
+		removable
+		max-visible="3"
+	></loquix-message-attachments>
+</LivePreview>
+
+Select the “more” card to reveal the remaining attachment.
+
+## Usage
+
+```js
+import '@loquix/core/define/define-message-attachments';
+```
+
+```html
+<loquix-message-attachments
+  size="md"
+  removable
+  max-visible="4"
+></loquix-message-attachments>
+```
+
+```js
+const gallery = document.querySelector('loquix-message-attachments');
+
+gallery.attachments = [
+  {
+    id: 'brief',
+    filename: 'product-brief.pdf',
+    filetype: 'application/pdf',
+    size: 245000,
+    status: 'complete',
+  },
+  {
+    id: 'hero',
+    filename: 'hero-image.png',
+    filetype: 'image/png',
+    size: 1500000,
+    status: 'complete',
+    url: 'https://cdn.example.com/hero-image.png',
+  },
+];
+```
+
+## Attachment shape
+
+```ts
+interface Attachment {
+  id: string;
+  file?: File;
+  url?: string;
+  filename: string;
+  filetype: string;
+  size: number;
+  purpose?: 'style' | 'subject' | 'source';
+  status: 'pending' | 'uploading' | 'complete' | 'error';
+  progress?: number;
+  error?: string;
+}
+```
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `attachments` | — | `Attachment[]` | `[]` | Files to render. Assign as a DOM property. |
+| `size` | `size` | `'xs' \| 'sm' \| 'md' \| 'lg'` | `'md'` | Card size and metadata density. |
+| `removable` | `removable` | `boolean` | `false` | Displays a remove button on each card. |
+| `maxVisible` | `max-visible` | `number` | `0` | Visible cards before “+N more”. `0` shows all. |
+
+## Events
+
+| Event | Detail | Notes |
+| --- | --- | --- |
+| `loquix-attachment-click` | `{ attachment: Attachment }` | Cancelable; use it to open your viewer or download flow. |
+| `loquix-attachment-remove` | `{ attachment: Attachment }` | Emitted by a card’s remove button. |
+
+```js
+gallery.addEventListener('loquix-attachment-remove', (event) => {
+  gallery.attachments = gallery.attachments.filter(
+    attachment => attachment.id !== event.detail.attachment.id,
+  );
+});
+```
+
+<Aside type="tip">
+	The component emits intent but does not mutate `attachments`. Remove the item from application state and assign a new array after handling the event.
+</Aside>
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `grid` | Outer collection and overflow button. |
+| `card` | Individual attachment card. |
+| `thumbnail` | Image preview or inferred file icon. |
+| `filename` | Filename text. |
+| `filesize` | Formatted file size. |
+| `remove` | Remove button. |
+| `overflow` | “+N more” control. |
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-message-attachments-gap` | Gap between cards. |
+| `--loquix-message-attachments-card-bg` | Card background. |
+| `--loquix-message-attachments-card-border-color` | Card border color. |
+| `--loquix-message-attachments-card-border-radius` | Card corner radius. |
+| `--loquix-message-attachments-card-hover-shadow` | Hover elevation. |
+| `--loquix-message-attachments-sm-size` | Small card width. |
+| `--loquix-message-attachments-md-size` | Medium card width. |
+| `--loquix-message-attachments-lg-size` | Large card width. |
+| `--loquix-message-attachments-xs-size` | Extra-small thumbnail size. |

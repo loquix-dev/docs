@@ -1,0 +1,106 @@
+---
+title: Welcome Screen
+description: Empty-state conversation screen with branding, guidance, suggestion prompts, and custom content.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Onboarding component</p>
+
+`<loquix-welcome-screen>` gives an empty conversation a useful starting point with a heading, guidance, branding, and data-driven prompt suggestions.
+
+<div class="component-meta">
+	<span>loquix-welcome-screen</span>
+	<span>empty state</span>
+	<span>composable</span>
+</div>
+
+## Preview
+
+<LivePreview label="Conversation welcome">
+	<div style="width: min(100%, 40rem); min-height: 20rem; margin-inline: auto;">
+		<loquix-welcome-screen
+			data-demo
+			heading="What would you like to create?"
+			subheading="Choose a starting point or write your own prompt."
+			layout="centered"
+			suggestion-variant="chip"
+		>
+			<div slot="logo" style="display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 0.9rem; background: #5b43e6; color: white; font-weight: 800;">L</div>
+		</loquix-welcome-screen>
+	</div>
+</LivePreview>
+
+## Usage
+
+```js
+import '@loquix/core/define/define-welcome-screen';
+```
+
+```html
+<loquix-welcome-screen
+  slot="empty-state"
+  heading="How can I help you?"
+  subheading="Choose a suggestion or write your own prompt."
+></loquix-welcome-screen>
+```
+
+```js
+const welcome = document.querySelector('loquix-welcome-screen');
+
+welcome.suggestions = [
+  { id: 'write', text: 'Write a launch post', icon: '✍️' },
+  { id: 'summarize', text: 'Summarize a document', icon: '📝' },
+];
+```
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `heading` | `heading` | `string` | localized text | Main heading. |
+| `subheading` | `subheading` | `string` | `''` | Guidance below the heading. |
+| `layout` | `layout` | `'centered' \| 'split'` | `'centered'` | Content arrangement. |
+| `suggestions` | — | `Suggestion[]` | `[]` | Prompt suggestions. Assign as a DOM property. |
+| `suggestionVariant` | `suggestion-variant` | `'chip' \| 'pill' \| 'card'` | `'chip'` | Visual form of the built-in suggestions. |
+
+## Suggestion events
+
+The built-in suggestion strip emits a composed event that bubbles through the welcome screen:
+
+| Event | Detail |
+| --- | --- |
+| `loquix-suggestion-select` | `{ suggestion: Suggestion }` |
+
+```js
+welcome.addEventListener('loquix-suggestion-select', (event) => {
+  composer.value = event.detail.suggestion.text;
+});
+```
+
+<Aside type="tip">
+	Place the welcome screen in `<loquix-message-list slot="empty-state">`. The list then handles showing and hiding it as messages appear.
+</Aside>
+
+## Slots
+
+| Slot | Purpose |
+| --- | --- |
+| `logo` | Brand mark above the heading. |
+| `heading` | Custom heading markup. |
+| `subheading` | Custom guidance markup. |
+| `suggestions` | Replaces the built-in suggestion chips. |
+| `footer` | Additional content below suggestions. |
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-welcome-padding` | Container padding. |
+| `--loquix-welcome-max-width` | Content maximum width. |
+| `--loquix-welcome-heading-font-size` | Heading size. |
+| `--loquix-welcome-heading-font-weight` | Heading weight. |
+| `--loquix-welcome-heading-color` | Heading color. |
+| `--loquix-welcome-subheading-font-size` | Subheading size. |
+| `--loquix-welcome-subheading-color` | Subheading color. |

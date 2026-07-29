@@ -1,0 +1,127 @@
+---
+title: Attachment Chip
+description: Compact file attachment with upload progress, errors, previews, purposes, and actions.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Configuration component</p>
+
+`<loquix-attachment-chip>` represents one file before or during upload. It combines file metadata, progress, errors, removal, and retry behavior in a compact surface.
+
+<div class="component-meta">
+	<span>loquix-attachment-chip</span>
+	<span>upload-aware</span>
+	<span>removable</span>
+</div>
+
+## Preview
+
+<LivePreview label="Attachment states" compact>
+	<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.75rem;">
+		<loquix-attachment-chip
+			attachment-id="brief"
+			filename="product-brief.pdf"
+			filetype="application/pdf"
+			size="245000"
+			status="complete"
+		></loquix-attachment-chip>
+		<loquix-attachment-chip
+			attachment-id="image"
+			filename="hero-image.png"
+			filetype="image/png"
+			size="1500000"
+			status="uploading"
+			progress="65"
+		></loquix-attachment-chip>
+		<loquix-attachment-chip
+			attachment-id="archive"
+			filename="source-files.zip"
+			filetype="application/zip"
+			size="10000000"
+			status="error"
+			error="Upload failed"
+		></loquix-attachment-chip>
+	</div>
+</LivePreview>
+
+## Usage
+
+```js
+import '@loquix/core/define/define-attachment-chip';
+```
+
+```html
+<loquix-attachment-chip
+  attachment-id="file_42"
+  filename="product-brief.pdf"
+  filetype="application/pdf"
+  size="245000"
+  status="uploading"
+  progress="65"
+></loquix-attachment-chip>
+```
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `filename` | `filename` | `string` | `''` | Display filename. |
+| `filetype` | `filetype` | `string` | `''` | MIME type or extension shorthand used for the file icon. |
+| `size` | `size` | `number` | `0` | File size in bytes. |
+| `purpose` | `purpose` | `'style' \| 'subject' \| 'source'` | — | Semantic role of the attachment. |
+| `removable` | `removable` | `boolean` | `true` | Shows the remove control. |
+| `status` | `status` | `'pending' \| 'uploading' \| 'complete' \| 'error'` | `'complete'` | Upload or processing state. |
+| `progress` | `progress` | `number` | `0` | Upload progress from 0 to 100. |
+| `attachmentId` | `attachment-id` | `string` | `''` | Stable ID included in the event attachment. |
+| `error` | `error` | `string` | `''` | Error tooltip text. |
+| `maxFilenameLength` | `max-filename-length` | `number` | `0` | Character limit with extension-preserving truncation. |
+| `noRetry` | `no-retry` | `boolean` | `false` | Hides Retry in the error state. |
+| `preview` | `preview` | `string` | `''` | Thumbnail URL used instead of the inferred file icon. |
+
+## Events
+
+| Event | Detail |
+| --- | --- |
+| `loquix-attachment-remove` | `{ attachment: Attachment }` |
+| `loquix-attachment-retry` | `{ attachment: Attachment }` |
+
+```js
+chip.addEventListener('loquix-attachment-retry', (event) => {
+  uploadAgain(event.detail.attachment.id);
+});
+```
+
+<Aside type="note">
+	Preview URLs are sanitized. HTTP(S), blob URLs, and raster image data URLs are supported; SVG data URLs and executable protocols are rejected.
+</Aside>
+
+## Slots
+
+| Slot | Purpose |
+| --- | --- |
+| `icon` | Replaces both the preview image and inferred file icon. |
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `chip` | Outer attachment surface. |
+| `icon` | Icon or preview area. |
+| `remove` | Remove button. |
+| `retry` | Retry button. |
+| `error-tooltip` | Error detail popover. |
+
+## Common CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-attachment-chip-bg` | Chip background. |
+| `--loquix-attachment-chip-border-color` | Border color. |
+| `--loquix-attachment-chip-border-radius` | Corner radius. |
+| `--loquix-attachment-chip-color` | Text and icon color. |
+| `--loquix-attachment-chip-progress-color` | Upload progress color. |
+| `--loquix-attachment-chip-error-color` | Error state color. |
+| `--loquix-attachment-chip-preview-size` | Thumbnail size. |
+| `--loquix-attachment-chip-filename-max-width` | Maximum filename width. |

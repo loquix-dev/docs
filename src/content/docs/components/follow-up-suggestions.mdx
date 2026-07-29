@@ -1,0 +1,98 @@
+---
+title: Follow-up Suggestions
+description: Contextual next-question prompts for assistant messages in inline, stacked, and carousel layouts.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Onboarding component</p>
+
+`<loquix-follow-up-suggestions>` presents likely next questions below an assistant response and delegates rendering to the shared suggestion chip system.
+
+<div class="component-meta">
+	<span>loquix-follow-up-suggestions</span>
+	<span>message-aware</span>
+	<span>data-driven</span>
+</div>
+
+## Preview
+
+<LivePreview label="Suggested next steps" compact>
+	<loquix-follow-up-suggestions
+		data-demo
+		variant="inline"
+		message-id="answer_42"
+		max-visible="3"
+		label="Continue exploring"
+	></loquix-follow-up-suggestions>
+</LivePreview>
+
+## Usage
+
+```js
+import '@loquix/core/define/define-follow-up-suggestions';
+```
+
+```html
+<loquix-follow-up-suggestions
+  variant="inline"
+  message-id="answer_42"
+  max-visible="3"
+  label="You might also ask"
+></loquix-follow-up-suggestions>
+```
+
+```js
+const followUps = document.querySelector('loquix-follow-up-suggestions');
+
+followUps.suggestions = [
+  { id: 'example', text: 'Can you give an example?' },
+  { id: 'compare', text: 'What are the alternatives?' },
+  { id: 'details', text: 'Tell me more about this' },
+];
+```
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `suggestions` | — | `Suggestion[]` | `[]` | Follow-up prompts. Assign as a DOM property. |
+| `variant` | `variant` | `'inline' \| 'stacked' \| 'carousel'` | `'inline'` | Layout behavior. |
+| `messageId` | `message-id` | `string` | `''` | ID of the associated assistant message. |
+| `maxVisible` | `max-visible` | `number` | `3` | Prompts shown before the overflow control. |
+| `label` | `label` | `string` | `''` | Optional heading above the prompts. |
+
+## Variants
+
+| Variant | Behavior |
+| --- | --- |
+| `inline` | Compact chips that wrap to additional lines. |
+| `stacked` | Pill treatment for a more prominent vertical group. |
+| `carousel` | One horizontal, scrollable row. |
+
+## Events
+
+| Event | Detail |
+| --- | --- |
+| `loquix-suggestion-select` | `{ suggestion: Suggestion }` |
+
+```js
+followUps.addEventListener('loquix-suggestion-select', (event) => {
+  sendPrompt(event.detail.suggestion.text);
+});
+```
+
+<Aside type="note">
+	`message-id` is contextual metadata for your application. The selection event contains the suggestion; keep the associated message ID in the surrounding state when you need both values.
+</Aside>
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-followup-gap` | Gap between prompts. |
+| `--loquix-followup-font-size` | Prompt text size. |
+| `--loquix-followup-margin-top` | Space above the component. |
+| `--loquix-followup-label-font-size` | Label size. |
+| `--loquix-followup-label-color` | Label color. |

@@ -240,15 +240,20 @@ header.header {
 .loquix-preview loquix-chat-composer,
 .loquix-preview loquix-chat-container,
 .loquix-preview loquix-chat-header,
+.loquix-preview loquix-composer-toolbar,
+.loquix-preview loquix-drop-zone,
+.loquix-preview loquix-follow-up-suggestions,
 .loquix-preview loquix-generation-controls,
 .loquix-preview loquix-message-actions,
+.loquix-preview loquix-message-attachments,
 .loquix-preview loquix-message-content,
 .loquix-preview loquix-message-item,
 .loquix-preview loquix-message-list,
 .loquix-preview loquix-mode-selector,
 .loquix-preview loquix-prompt-input,
 .loquix-preview loquix-reasoning-block,
-.loquix-preview loquix-suggestion-chips {
+.loquix-preview loquix-suggestion-chips,
+.loquix-preview loquix-welcome-screen {
 	width: min(100%, 40rem);
 	margin-inline: auto;
 }
