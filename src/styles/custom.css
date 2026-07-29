@@ -1,4 +1,5 @@
 @import '@loquix/core/tokens/variables.css';
+@import '@loquix/core/tokens/themes/dark';
 
 :root {
 	--sl-font: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
