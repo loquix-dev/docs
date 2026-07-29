@@ -1,0 +1,102 @@
+---
+title: Prompt Input
+description: Auto-resizing textarea with submit shortcuts, change events, and paste-to-upload support.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Input component</p>
+
+`<loquix-prompt-input>` is the low-level textarea used by Chat Composer. Use it directly when you need full control over the surrounding actions and layout.
+
+<div class="component-meta">
+	<span>loquix-prompt-input</span>
+	<span>keyboard-aware</span>
+	<span>auto-resize</span>
+</div>
+
+## Preview
+
+<LivePreview label="Prompt input" compact>
+	<loquix-prompt-input
+		variant="chat"
+		placeholder="Describe what you want to build…"
+		rows="2"
+	></loquix-prompt-input>
+</LivePreview>
+
+Press <kbd>Enter</kbd> to submit or <kbd>Shift</kbd> + <kbd>Enter</kbd> to insert a new line.
+
+## Usage
+
+```js
+import '@loquix/core/define/define-prompt-input';
+```
+
+```html
+<loquix-prompt-input
+  variant="chat"
+  placeholder="Type a message…"
+  rows="1"
+  auto-resize
+  submit-on-enter
+></loquix-prompt-input>
+```
+
+```js
+const input = document.querySelector('loquix-prompt-input');
+
+input.addEventListener('loquix-change', (event) => {
+  saveDraft(event.detail.value);
+});
+
+input.addEventListener('loquix-submit', (event) => {
+  sendMessage(event.detail.content);
+});
+```
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `variant` | `variant` | `'chat' \| 'inline' \| 'command' \| 'panel'` | `'chat'` | Selects the visual treatment. |
+| `value` | `value` | `string` | `''` | Current textarea value. |
+| `rows` | `rows` | `number` | `1` | Initial number of visible rows. |
+| `autoResize` | `auto-resize` | `boolean` | `true` | Grows the textarea as content is added. |
+| `submitOnEnter` | `submit-on-enter` | `boolean` | `true` | Submits with Enter; Shift+Enter adds a line. |
+| `placeholder` | `placeholder` | `string` | localized text | Placeholder shown when empty. |
+| `disabled` | `disabled` | `boolean` | `false` | Prevents input and submission. |
+
+## Events
+
+| Event | Detail | Description |
+| --- | --- | --- |
+| `loquix-change` | `{ value: string }` | Fired whenever the input value changes. |
+| `loquix-submit` | `{ content: string }` | Fired for a valid keyboard or programmatic submit. |
+| `loquix-paste-files` | `{ files: File[] }` | Fired when clipboard data contains files. |
+
+<Aside type="tip">
+	When Prompt Input is inside Chat Composer, the composer handles its change and submit events for you.
+</Aside>
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `container` | Outer input wrapper. |
+| `input` | Native `<textarea>` element. |
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-input-bg` | Textarea background. |
+| `--loquix-input-color` | Input text color. |
+| `--loquix-input-border-color` | Default border color. |
+| `--loquix-input-focus-border-color` | Focused border color. |
+| `--loquix-input-placeholder-color` | Placeholder color. |
+| `--loquix-input-font-family` | Input font family. |
+| `--loquix-input-font-size` | Input font size. |
+| `--loquix-input-padding` | Inner padding. |
+| `--loquix-input-border-radius` | Corner radius. |

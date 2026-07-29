@@ -1,0 +1,98 @@
+---
+title: Chat Header
+description: Header bar for agent identity, model context, mode switching, and chat controls.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Layout component</p>
+
+`<loquix-chat-header>` presents the assistant identity and reserves predictable regions for model, mode, and utility controls.
+
+<div class="component-meta">
+	<span>loquix-chat-header</span>
+	<span>composable</span>
+	<span>private-mode aware</span>
+</div>
+
+## Preview
+
+<LivePreview label="Header with custom identity" compact>
+	<loquix-chat-header agent-name="Research Assistant">
+		<loquix-message-avatar
+			slot="avatar"
+			variant="initials"
+			name="RA"
+			size="sm"
+		></loquix-message-avatar>
+		<span slot="controls" style="font-size: 0.75rem; opacity: 0.7;">Atlas Pro · Online</span>
+	</loquix-chat-header>
+</LivePreview>
+
+## Usage
+
+```js
+import '@loquix/core/define/define-chat-header';
+import '@loquix/core/define/define-message-avatar';
+```
+
+```html
+<loquix-chat-header agent-name="Research Assistant">
+  <loquix-message-avatar
+    slot="avatar"
+    variant="initials"
+    name="RA"
+  ></loquix-message-avatar>
+
+  <button slot="controls" aria-label="Open settings">Settings</button>
+</loquix-chat-header>
+```
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `agentName` | `agent-name` | `string` | — | Display name of the assistant. |
+| `showModelBadge` | `show-model-badge` | `boolean` | `false` | Shows the built-in model badge area. |
+| `privateMode` | `private-mode` | `boolean` | `false` | Hides model information for private conversations. |
+
+## Slots
+
+| Slot | Purpose |
+| --- | --- |
+| `avatar` | Agent avatar or product icon. |
+| `title` | Replaces the generated agent title. |
+| `controls` | Model badge, settings, or other utility actions. |
+| `mode-switcher` | Tabs, pills, or another mode selection control. |
+
+<Aside type="note">
+	Prefer short, stable agent names. Put volatile state such as the selected model or connection status in `controls`.
+</Aside>
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `header` | Outer header bar. |
+| `title` | Agent title text. |
+
+```css title="A borderless embedded header"
+loquix-chat-header::part(header) {
+  border-bottom: 0;
+}
+
+loquix-chat-header::part(title) {
+  letter-spacing: -0.02em;
+}
+```
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-header-bg` | Header background. |
+| `--loquix-header-color` | Header text color. |
+| `--loquix-header-height` | Height of the bar. |
+| `--loquix-header-padding` | Horizontal padding. |
+| `--loquix-border-color` | Bottom border color. |

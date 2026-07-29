@@ -1,0 +1,130 @@
+---
+title: Model Selector
+description: Model dropdown with grouping, search, tier metadata, costs, and capability badges.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Configuration component</p>
+
+`<loquix-model-selector>` presents an LLM catalog without coupling your UI to a specific provider. It supports rich metadata and emits one framework-neutral change event.
+
+<div class="component-meta">
+	<span>loquix-model-selector</span>
+	<span>data-driven</span>
+	<span>keyboard accessible</span>
+</div>
+
+## Preview
+
+<LivePreview label="Model selector" compact>
+	<div style="display: grid; place-items: center; min-height: 8rem;">
+		<loquix-model-selector
+			data-demo
+			value="atlas-pro"
+			show-cost
+			show-capabilities
+			searchable
+			placement="bottom"
+		></loquix-model-selector>
+	</div>
+</LivePreview>
+
+Open the selector to inspect the option metadata and keyboard navigation.
+
+## Usage
+
+```js
+import '@loquix/core/define/define-model-selector';
+```
+
+```html
+<loquix-model-selector
+  value="atlas-pro"
+  show-cost
+  show-capabilities
+  searchable
+></loquix-model-selector>
+```
+
+```js
+const selector = document.querySelector('loquix-model-selector');
+
+selector.models = [
+  {
+    value: 'atlas-pro',
+    label: 'Atlas Pro',
+    description: 'Best for complex reasoning',
+    cost: '$5/MTok',
+    capabilities: ['reasoning', 'vision', 'code'],
+    group: 'Flagship',
+  },
+];
+
+selector.addEventListener('loquix-model-change', (event) => {
+  console.log(event.detail.from, event.detail.to);
+});
+```
+
+## Model shape
+
+```ts
+interface ModelOption {
+  value: string;
+  label: string;
+  description?: string;
+  icon?: string;
+  tier?: string;
+  cost?: string;
+  capabilities?: string[];
+  group?: string;
+}
+```
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `models` | — | `ModelOption[]` | `[]` | Model catalog. Assign as a DOM property. |
+| `value` | `value` | `string` | `''` | Selected model identifier. |
+| `placeholder` | `placeholder` | `string` | localized text | Text shown before selection. |
+| `showCost` | `show-cost` | `boolean` | `false` | Displays model pricing metadata. |
+| `showCapabilities` | `show-capabilities` | `boolean` | `false` | Displays capability badges. |
+| `grouped` | `grouped` | `boolean` | `false` | Groups models by their `group` field. |
+| `searchable` | `searchable` | `boolean` | `false` | Adds search inside the dropdown. |
+| `disabled` | `disabled` | `boolean` | `false` | Disables the trigger and selection. |
+| `placement` | `placement` | `'top' \| 'bottom'` | `'top'` | Preferred dropdown direction. |
+| `open` | `open` | `boolean` | `false` | Controls the panel’s open state. |
+
+## Events
+
+| Event | Detail |
+| --- | --- |
+| `loquix-model-change` | `{ from: string, to: string }` |
+
+<Aside type="note">
+	Keep provider-specific request configuration outside this component. The selector should emit a stable model ID that your application maps to its backend.
+</Aside>
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `trigger` | Selected-value button. |
+| `panel` | Dropdown surface. |
+| `search` | Search input wrapper. |
+| `option` | Each model option. |
+
+## Common CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-model-trigger-bg` | Trigger background. |
+| `--loquix-model-trigger-hover-bg` | Trigger hover background. |
+| `--loquix-model-trigger-radius` | Trigger corner radius. |
+| `--loquix-model-panel-bg` | Dropdown background. |
+| `--loquix-model-panel-border-color` | Dropdown border. |
+| `--loquix-model-panel-radius` | Dropdown corner radius. |
+| `--loquix-model-option-hover-bg` | Option hover background. |
+| `--loquix-model-max-height` | Maximum list height. |

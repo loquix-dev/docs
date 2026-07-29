@@ -238,9 +238,24 @@ header.header {
 }
 
 .loquix-preview loquix-chat-composer,
-.loquix-preview loquix-message-item {
+.loquix-preview loquix-chat-container,
+.loquix-preview loquix-chat-header,
+.loquix-preview loquix-message-item,
+.loquix-preview loquix-prompt-input,
+.loquix-preview loquix-reasoning-block,
+.loquix-preview loquix-suggestion-chips {
 	width: min(100%, 40rem);
 	margin-inline: auto;
+}
+
+.loquix-preview loquix-chat-container {
+	overflow: hidden;
+	border: 1px solid var(--loquix-border-color);
+	border-radius: 1rem;
+}
+
+.loquix-preview loquix-model-selector {
+	justify-self: center;
 }
 
 .loquix-preview loquix-typing-indicator {

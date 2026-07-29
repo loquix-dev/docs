@@ -1,0 +1,102 @@
+---
+title: Chat Container
+description: Root layout primitive that composes the header, messages, composer, sidebar, and footer.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Layout component</p>
+
+`<loquix-chat-container>` is the root shell for a complete chat experience. It coordinates layout and shared chat state while leaving every region composable through slots.
+
+<div class="component-meta">
+	<span>loquix-chat-container</span>
+	<span>root layout</span>
+	<span>state-aware</span>
+</div>
+
+## Preview
+
+<LivePreview label="Full chat layout">
+	<loquix-chat-container layout="full" mode="chat" style="height: 30rem;">
+		<loquix-chat-header slot="header" agent-name="Loquix Assistant"></loquix-chat-header>
+		<loquix-message-list slot="messages">
+			<loquix-message-item sender="assistant" status="complete" model="Atlas Pro">
+				<loquix-message-content>Welcome! What would you like to build today?</loquix-message-content>
+			</loquix-message-item>
+			<loquix-message-item sender="user" status="complete">
+				<loquix-message-content>Help me design an AI research interface.</loquix-message-content>
+			</loquix-message-item>
+		</loquix-message-list>
+		<loquix-chat-composer slot="composer" placeholder="Ask anything…"></loquix-chat-composer>
+	</loquix-chat-container>
+</LivePreview>
+
+## Usage
+
+```js
+import '@loquix/core/define/define-chat-container';
+import '@loquix/core/define/define-chat-header';
+import '@loquix/core/define/define-message-list';
+import '@loquix/core/define/define-chat-composer';
+```
+
+```html
+<loquix-chat-container layout="full" mode="chat">
+  <loquix-chat-header slot="header" agent-name="My Assistant"></loquix-chat-header>
+  <loquix-message-list slot="messages"></loquix-message-list>
+  <loquix-chat-composer slot="composer"></loquix-chat-composer>
+</loquix-chat-container>
+```
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `layout` | `layout` | `'full' \| 'panel' \| 'floating' \| 'inline'` | `'full'` | Selects the outer layout treatment. |
+| `mode` | `mode` | `'chat' \| 'research' \| 'build' \| 'create'` | `'chat'` | Describes the current product mode. |
+| `model` | `model` | `string` | `''` | Current model identifier. |
+| `memoryEnabled` | `memory-enabled` | `boolean` | `false` | Indicates that conversation memory is enabled. |
+| `privateMode` | `private-mode` | `boolean` | `false` | Hides model information in descendants that consume the shared state. |
+| `streaming` | `streaming` | `boolean` | `false` | Indicates that the assistant is currently streaming. |
+
+<Aside type="tip">
+	Use `panel` or `floating` for embedded assistants. Use `full` when chat is the primary application surface.
+</Aside>
+
+## Slots
+
+| Slot | Purpose |
+| --- | --- |
+| `header` | Chat header region. |
+| `sidebar` | Optional navigation or contextual panel. |
+| `messages` | Scrollable message history. |
+| `composer` | Prompt composer region. |
+| `footer` | Optional content below the primary layout. |
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `container` | Outermost wrapper. |
+| `main` | Header, message list, and composer column. |
+| `sidebar` | Optional sidebar region. |
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-container-bg` | Container background. |
+| `--loquix-container-max-width` | Maximum width in the `full` layout. |
+| `--loquix-container-border-radius` | Corner radius in the `floating` layout. |
+| `--loquix-container-shadow` | Shadow in the `floating` layout. |
+| `--loquix-sidebar-width` | Width of the sidebar region. |
+| `--loquix-border-color` | Shared layout border color. |
+
+```css title="Floating assistant shell"
+loquix-chat-container {
+  --loquix-container-border-radius: 24px;
+  --loquix-container-shadow: 0 24px 64px rgb(24 18 52 / 20%);
+}
+```

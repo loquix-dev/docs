@@ -46,9 +46,15 @@ export default defineConfig({
 				{
 					label: 'Components',
 					items: [
+						{ label: 'Chat Container', slug: 'components/chat-container' },
+						{ label: 'Chat Header', slug: 'components/chat-header' },
 						{ label: 'Chat Composer', slug: 'components/chat-composer' },
+						{ label: 'Prompt Input', slug: 'components/prompt-input' },
 						{ label: 'Message Item', slug: 'components/message-item' },
 						{ label: 'Typing Indicator', slug: 'components/typing-indicator' },
+						{ label: 'Reasoning Block', slug: 'components/reasoning-block' },
+						{ label: 'Suggestion Chips', slug: 'components/suggestion-chips' },
+						{ label: 'Model Selector', slug: 'components/model-selector' },
 					],
 				},
 			],

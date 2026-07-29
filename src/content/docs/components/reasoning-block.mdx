@@ -1,0 +1,108 @@
+---
+title: Reasoning Block
+description: Collapsible status panel for streaming progress, concise reasoning summaries, and execution traces.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Reasoning component</p>
+
+`<loquix-reasoning-block>` presents longer-running model work in a collapsible panel. It supports a live thinking state and completed metadata such as duration and token count.
+
+<div class="component-meta">
+	<span>loquix-reasoning-block</span>
+	<span>collapsible</span>
+	<span>streaming-aware</span>
+</div>
+
+## Preview
+
+<LivePreview label="Completed reasoning">
+	<loquix-reasoning-block
+		status="done"
+		duration="6"
+		tokens="284"
+		default-open
+		content="The request needs a composable shell, a compact navigation model, and event contracts that stay framework-neutral. The component API already provides slots for each major surface."
+	></loquix-reasoning-block>
+</LivePreview>
+
+## Usage
+
+```js
+import '@loquix/core/define/define-reasoning-block';
+```
+
+```html
+<loquix-reasoning-block
+  status="done"
+  duration="6"
+  tokens="284"
+  preview="Compared layout and composition options"
+></loquix-reasoning-block>
+```
+
+```js
+const reasoning = document.querySelector('loquix-reasoning-block');
+
+reasoning.content = streamedReasoningSummary;
+
+reasoning.addEventListener('loquix-reasoning-toggle', (event) => {
+  trackReasoningVisibility(event.detail.open);
+});
+```
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `status` | `status` | `'thinking' \| 'done'` | `'done'` | Current reasoning lifecycle. |
+| `duration` | `duration` | `number` | — | Elapsed seconds shown when complete. |
+| `tokens` | `tokens` | `number` | — | Optional token count shown with duration. |
+| `preview` | `preview` | `string` | derived | One-line collapsed summary. |
+| `content` | `content` | `string` | `''` | Full text rendered safely as text, not HTML. |
+| `defaultOpen` | `default-open` | `boolean` | state-dependent | Initial expanded state. User toggles take precedence afterward. |
+
+## Events
+
+| Event | Detail | Description |
+| --- | --- | --- |
+| `loquix-reasoning-toggle` | `{ open: boolean }` | Fired after the user expands or collapses the panel. |
+
+## Content slot
+
+The default slot can provide richer markup. When it contains non-whitespace content, it takes precedence over the `content` property.
+
+```html
+<loquix-reasoning-block status="done" duration="8" default-open>
+  <strong>Retrieved 12 sources.</strong>
+  Ranked the top results using semantic similarity.
+</loquix-reasoning-block>
+```
+
+<Aside type="caution" title="Use appropriate disclosure">
+	Expose concise, user-appropriate progress or summaries. Do not treat the component as a requirement to reveal private model internals or hidden chain-of-thought.
+</Aside>
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `container` | Outer panel. |
+| `header` | Expand/collapse button. |
+| `label` | Status label. |
+| `meta` | Duration and token metadata. |
+| `chevron` | Disclosure indicator. |
+| `preview` | Collapsed summary. |
+| `content` | Expanded body. |
+| `cursor` | Streaming caret during `thinking`. |
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-thought-bg` | Panel background. |
+| `--loquix-thought-border-color` | Panel border color. |
+| `--loquix-thought-text-color` | Body text color. |
+| `--loquix-streaming-color` | Thinking-state accent and caret. |

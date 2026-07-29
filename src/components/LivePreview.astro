@@ -18,8 +18,58 @@ const { label = 'Preview', compact = false } = Astro.props;
 </div>
 
 <script>
+	import '@loquix/core/define/define-chat-container';
+	import '@loquix/core/define/define-chat-header';
 	import '@loquix/core/define/define-chat-composer';
+	import '@loquix/core/define/define-message-avatar';
 	import '@loquix/core/define/define-message-content';
 	import '@loquix/core/define/define-message-item';
+	import '@loquix/core/define/define-message-list';
+	import '@loquix/core/define/define-model-selector';
+	import '@loquix/core/define/define-prompt-input';
+	import '@loquix/core/define/define-reasoning-block';
+	import '@loquix/core/define/define-suggestion-chips';
 	import '@loquix/core/define/define-typing-indicator';
+
+	const suggestions = [
+		{ id: 'write', text: 'Write a launch post', icon: '✍️' },
+		{ id: 'summarize', text: 'Summarize a document', icon: '📝' },
+		{ id: 'debug', text: 'Debug my code', icon: '⌘' },
+		{ id: 'explain', text: 'Explain a concept', icon: '💡' },
+	];
+
+	const models = [
+		{
+			value: 'atlas-pro',
+			label: 'Atlas Pro',
+			description: 'Best for complex reasoning',
+			cost: '$5/MTok',
+			group: 'Flagship',
+			capabilities: ['reasoning', 'vision', 'code'],
+		},
+		{
+			value: 'atlas-mini',
+			label: 'Atlas Mini',
+			description: 'Fast and affordable',
+			cost: '$0.20/MTok',
+			group: 'Fast',
+			capabilities: ['chat', 'code'],
+		},
+		{
+			value: 'ember',
+			label: 'Ember',
+			description: 'Creative writing specialist',
+			cost: '$2/MTok',
+			group: 'Specialized',
+			capabilities: ['writing'],
+		},
+	];
+
+	document.querySelectorAll('loquix-suggestion-chips[data-demo]').forEach((element) => {
+		(element as HTMLElement & { suggestions: typeof suggestions }).suggestions = suggestions;
+	});
+
+	document.querySelectorAll('loquix-model-selector[data-demo]').forEach((element) => {
+		(element as HTMLElement & { models: typeof models }).models = models;
+	});
 </script>

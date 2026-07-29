@@ -1,0 +1,107 @@
+---
+title: Suggestion Chips
+description: Prompt suggestion strip with chip, pill, and card variants plus overflow handling.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Onboarding component</p>
+
+`<loquix-suggestion-chips>` turns starter prompts and follow-up ideas into a compact, keyboard-accessible action strip.
+
+<div class="component-meta">
+	<span>loquix-suggestion-chips</span>
+	<span>data-driven</span>
+	<span>responsive</span>
+</div>
+
+## Preview
+
+<LivePreview label="Prompt suggestions" compact>
+	<loquix-suggestion-chips
+		data-demo
+		variant="chip"
+		max-visible="4"
+	></loquix-suggestion-chips>
+</LivePreview>
+
+## Usage
+
+```js
+import '@loquix/core/define/define-suggestion-chips';
+```
+
+```html
+<loquix-suggestion-chips
+  variant="chip"
+  max-visible="4"
+></loquix-suggestion-chips>
+```
+
+```js
+const chips = document.querySelector('loquix-suggestion-chips');
+
+chips.suggestions = [
+  { id: 'write', text: 'Write a launch post', icon: '✍️' },
+  { id: 'summary', text: 'Summarize a document', icon: '📝' },
+  { id: 'debug', text: 'Debug my code' },
+];
+
+chips.addEventListener('loquix-suggestion-select', (event) => {
+  composer.value = event.detail.suggestion.text;
+});
+```
+
+## Suggestion shape
+
+```ts
+interface Suggestion {
+  id: string;
+  text: string;
+  icon?: string;
+  description?: string;
+  category?: string;
+  metadata?: Record<string, unknown>;
+}
+```
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `suggestions` | — | `Suggestion[]` | `[]` | Items rendered as buttons. Assign as a DOM property. |
+| `variant` | `variant` | `'chip' \| 'pill' \| 'card'` | `'chip'` | Selects the visual density. |
+| `maxVisible` | `max-visible` | `number` | `0` | Visible item limit before “+N more”. `0` shows all. |
+| `disabled` | `disabled` | `boolean` | `false` | Disables every suggestion. |
+| `wrap` | `wrap` | `boolean` | `true` | Wraps items; when false, the strip scrolls horizontally. |
+
+## Events
+
+| Event | Detail |
+| --- | --- |
+| `loquix-suggestion-select` | `{ suggestion: Suggestion }` |
+
+<Aside type="note">
+	Assign arrays using the `suggestions` DOM property. HTML attributes can only represent strings.
+</Aside>
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `chip` | Each suggestion button. |
+| `more-button` | Overflow button displayed after `maxVisible`. |
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-chip-bg` | Chip background. |
+| `--loquix-chip-color` | Text color. |
+| `--loquix-chip-border-color` | Border color. |
+| `--loquix-chip-border-radius` | Corner radius. |
+| `--loquix-chip-gap` | Space between items. |
+| `--loquix-chip-padding` | Inner padding. |
+| `--loquix-chip-font-size` | Text size. |
+| `--loquix-chip-hover-bg` | Hover background. |
