@@ -1,0 +1,159 @@
+---
+title: Events and state
+description: Connect Loquix Web Components to application data, asynchronous requests, and TypeScript.
+---
+
+import { Aside, Card, CardGrid } from '@astrojs/starlight/components';
+
+Loquix components communicate with standard attributes, DOM properties, methods, and custom events. Your application remains responsible for conversations, requests, persistence, and provider credentials.
+
+## The data flow
+
+<CardGrid>
+	<Card title="Inputs" icon="add-document">
+		Pass primitive configuration through HTML attributes and complex data through DOM properties.
+	</Card>
+	<Card title="Intent" icon="star">
+		Listen for `loquix-*` events such as submit, stop, selection, feedback, and attachment removal.
+	</Card>
+	<Card title="State" icon="setting">
+		Update your application state, then reflect the result back into component properties and attributes.
+	</Card>
+</CardGrid>
+
+## Attributes for primitive values
+
+Strings, numbers, and true boolean flags work naturally in markup:
+
+```html
+<loquix-chat-composer
+  placeholder="Ask anything…"
+  max-length="4000"
+  streaming
+></loquix-chat-composer>
+```
+
+Boolean attributes are true when present, regardless of their text value. Do not write `streaming="false"`; remove the attribute or assign the property:
+
+```js
+composer.streaming = false;
+```
+
+## Properties for objects and arrays
+
+Assign structured data after selecting the element:
+
+```js
+const selector = document.querySelector('loquix-model-selector');
+
+selector.models = [
+  {
+    value: 'atlas-pro',
+    label: 'Atlas Pro',
+    description: 'Complex reasoning',
+    capabilities: ['reasoning', 'vision'],
+  },
+];
+```
+
+HTML attributes serialize values to strings, so they are not suitable for `models`, `modes`, `suggestions`, `attachments`, or other object arrays.
+
+## Events cross Shadow DOM
+
+Loquix events use the `loquix-` prefix and are dispatched with `bubbles: true` and `composed: true`. Listen on the component, chat container, application shell, or document:
+
+```js
+const chat = document.querySelector('loquix-chat-container');
+
+chat.addEventListener('loquix-submit', event => {
+  console.log(event.detail.content);
+});
+
+chat.addEventListener('loquix-model-change', event => {
+  console.log('Changed from', event.detail.from, 'to', event.detail.to);
+});
+```
+
+Event payloads live in `event.detail`. Component reference pages document each payload shape.
+
+## Keep application state authoritative
+
+Use events as intent, not as persistence:
+
+```js
+attachments.addEventListener('loquix-attachment-remove', event => {
+  const removedId = event.detail.attachment.id;
+
+  state.attachments = state.attachments.filter(
+    attachment => attachment.id !== removedId,
+  );
+
+  attachments.attachments = state.attachments;
+});
+```
+
+This pattern keeps components compatible with any state manager and makes server synchronization explicit.
+
+## Model an asynchronous request
+
+```js
+const controller = new AbortController();
+
+chat.addEventListener('loquix-submit', async event => {
+  composer.streaming = true;
+
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ content: event.detail.content }),
+    });
+
+    if (!response.ok) throw new Error('Request failed');
+    // Append or update the assistant message from the response.
+  } finally {
+    composer.streaming = false;
+  }
+});
+
+chat.addEventListener('loquix-stop', () => controller.abort());
+```
+
+<Aside type="caution">
+	Create a new `AbortController` for every request in production. The condensed example focuses on how `streaming` and `loquix-stop` connect to request state.
+</Aside>
+
+## TypeScript
+
+Importing `@loquix/core` types augments `HTMLElementEventMap` with typed Loquix events:
+
+```ts
+import type {
+  LoquixSubmitDetail,
+  LoquixModelChangeDetail,
+} from '@loquix/core';
+
+document.addEventListener('loquix-submit', event => {
+  const content: string = event.detail.content;
+});
+```
+
+For element-specific properties, import the class type:
+
+```ts
+import type { LoquixModelSelector } from
+  '@loquix/core/classes/loquix-model-selector';
+
+const selector = document.querySelector(
+  'loquix-model-selector',
+) as LoquixModelSelector;
+```
+
+## Security boundaries
+
+- Render user and model strings with `textContent` unless they have been sanitized.
+- Keep AI provider keys and privileged requests on your server.
+- Validate dropped files again on the server; the browser `accept` filter is a usability feature.
+- Treat URLs and metadata from model output as untrusted input.
+- Use stable message and attachment IDs instead of DOM position for updates.

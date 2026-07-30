@@ -1,0 +1,91 @@
+---
+title: Browser support
+description: Runtime requirements, tested browser engines, SSR guidance, and version compatibility for Loquix.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+This documentation release targets `@loquix/core` **0.4.1**.
+
+## Support matrix
+
+| Environment | Status | Notes |
+| --- | --- | --- |
+| Chromium browsers | Automated component tests | Includes Chrome and Chromium-based Edge behavior. |
+| WebKit / Safari | Automated component tests | Covered through Playwright WebKit. |
+| Firefox | Compatibility target | Part of the published browser target; verify critical product flows in your own matrix. |
+| Legacy browsers | Not supported | Internet Explorer and environments without modern Web Components are out of scope. |
+
+Loquix requires an **ES2021+** browser environment with:
+
+- Custom Elements;
+- Shadow DOM;
+- CSS custom properties;
+- JavaScript modules;
+- standard `CustomEvent` and modern DOM APIs.
+
+No polyfills are included in `@loquix/core`.
+
+<Aside type="note">
+	The project publishes browser-engine targets rather than minimum numbered browser versions. If your product requires a fixed enterprise matrix, run its critical flows against those exact versions before release.
+</Aside>
+
+## Server-side rendering
+
+Definition imports register custom elements and must run in a browser environment:
+
+```js
+import '@loquix/core/define/define-chat-composer';
+```
+
+In SSR frameworks, place definition imports in a client entry point or load them dynamically after the browser starts:
+
+```js
+if (typeof window !== 'undefined') {
+  await import('@loquix/core/define/define-chat-composer');
+}
+```
+
+The custom element markup can still be rendered by the server. It upgrades after the corresponding definition is registered in the browser.
+
+## Framework compatibility
+
+| Framework style | Integration |
+| --- | --- |
+| Plain HTML / JavaScript | Use elements, properties, and `addEventListener` directly. |
+| React | Use native custom element support or the optional `@loquix/react` wrappers when available in your project. |
+| Vue, Svelte, Angular | Use the framework’s native custom element support. |
+| Astro, Next.js, Nuxt, SvelteKit | Register definitions from client-side code; avoid executing registration imports during SSR. |
+
+Object and array values must be assigned as element properties in every framework. Check your framework’s syntax for DOM properties and custom events.
+
+## Version compatibility
+
+The examples and API tables on this site are validated against the exact dependency:
+
+```json
+{
+  "dependencies": {
+    "@loquix/core": "0.4.1"
+  }
+}
+```
+
+Pin the package while integrating, then review Loquix release notes before upgrading:
+
+```sh
+npm install @loquix/core@0.4.1 lit
+```
+
+## What to test in your product
+
+- keyboard navigation and focus in every interactive flow;
+- light and dark themes;
+- streaming updates and cancellation;
+- long messages, filenames, labels, and translated text;
+- touch input and narrow layouts;
+- file drag/drop and paste behavior;
+- any custom slotted content or CSS part overrides;
+- SSR hydration and client-side component registration.
+
+Continue with [Accessibility](/guides/accessibility/) for the full release checklist.

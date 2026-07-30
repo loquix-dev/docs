@@ -1,0 +1,151 @@
+---
+title: Quick start
+description: Build a working Loquix chat surface and connect its submit event in a few minutes.
+sidebar:
+  badge:
+    text: Start here
+    variant: success
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+import LivePreview from '../../components/LivePreview.astro';
+import QuickStartDemo from '../../components/QuickStartDemo.astro';
+
+This guide builds a small but complete chat interface with message history, a composer, safe text rendering, and a simulated assistant response.
+
+## Try the finished result
+
+<LivePreview label="Working quick start">
+	<QuickStartDemo />
+</LivePreview>
+
+The preview uses no backend. It handles `loquix-submit`, appends the user message, briefly enters streaming mode, and adds a local response.
+
+## Build it
+
+<Steps>
+
+1. **Install Loquix.**
+
+   ```sh
+   npm install @loquix/core lit
+   ```
+
+2. **Register the components and tokens.**
+
+   Add these imports to your browser entry point:
+
+   ```js title="main.js"
+   import '@loquix/core/tokens/variables.css';
+   import '@loquix/core/define/define-chat-container';
+   import '@loquix/core/define/define-chat-header';
+   import '@loquix/core/define/define-message-list';
+   import '@loquix/core/define/define-message-item';
+   import '@loquix/core/define/define-message-content';
+   import '@loquix/core/define/define-chat-composer';
+   ```
+
+3. **Compose the chat surface.**
+
+   ```html title="index.html"
+   <loquix-chat-container id="chat" layout="full" mode="chat">
+     <loquix-chat-header
+       slot="header"
+       agent-name="My Assistant"
+     ></loquix-chat-header>
+
+     <loquix-message-list
+       id="messages"
+       slot="messages"
+       auto-scroll
+       show-scroll-anchor
+     >
+       <loquix-message-item sender="assistant" status="complete">
+         <loquix-message-content>
+           Hello! How can I help?
+         </loquix-message-content>
+       </loquix-message-item>
+     </loquix-message-list>
+
+     <loquix-chat-composer
+       id="composer"
+       slot="composer"
+       placeholder="Ask anything…"
+       max-length="4000"
+     ></loquix-chat-composer>
+   </loquix-chat-container>
+   ```
+
+4. **Handle submitted messages.**
+
+   Append untrusted text with `textContent`, not `innerHTML`:
+
+   ```js title="main.js"
+   const chat = document.querySelector('#chat');
+   const messages = document.querySelector('#messages');
+   const composer = document.querySelector('#composer');
+
+   function appendMessage(sender, text) {
+     const message = document.createElement('loquix-message-item');
+     message.setAttribute('sender', sender);
+     message.setAttribute('status', 'complete');
+
+     const content = document.createElement('loquix-message-content');
+     content.textContent = text;
+     message.append(content);
+     messages.append(message);
+   }
+
+   chat.addEventListener('loquix-submit', event => {
+     const { content } = event.detail;
+     appendMessage('user', content);
+
+     composer.streaming = true;
+
+     window.setTimeout(() => {
+       appendMessage('assistant', `You sent: ${content}`);
+       composer.streaming = false;
+     }, 500);
+   });
+   ```
+
+</Steps>
+
+## Connect your backend
+
+Replace the simulated timeout with your application request:
+
+```js
+chat.addEventListener('loquix-submit', async event => {
+  const { content } = event.detail;
+  appendMessage('user', content);
+  composer.streaming = true;
+
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ content }),
+    });
+
+    if (!response.ok) throw new Error('Request failed');
+    const result = await response.json();
+    appendMessage('assistant', result.content);
+  } catch {
+    appendMessage('assistant', 'Something went wrong. Please try again.');
+  } finally {
+    composer.streaming = false;
+  }
+});
+```
+
+<Aside type="caution" title="Keep credentials on the server">
+	Do not call an AI provider with a secret key directly from the browser. Send the prompt to your own authenticated backend and return only the response data needed by the UI.
+</Aside>
+
+## Where to go next
+
+- Use [Events and state](/guides/events-and-state/) to connect streaming and application state.
+- Apply your brand in [Theming](/guides/theming/).
+- Review [Accessibility](/guides/accessibility/) before shipping.
+- Browse the [component catalog](/components/).

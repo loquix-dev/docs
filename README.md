@@ -28,9 +28,10 @@ Each component page should include:
 ## Checks
 
 ```sh
-pnpm check
-pnpm build
+pnpm validate
 ```
+
+The release check validates Astro and TypeScript, verifies internal links, and builds the static production site.
 
 ## Contributing
 

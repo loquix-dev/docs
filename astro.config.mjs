@@ -9,6 +9,11 @@ export default defineConfig({
 			title: 'Loquix',
 			description: 'Web Components for production-ready AI chat interfaces.',
 			favicon: '/og.png',
+			locales: {
+				root: { label: 'English', lang: 'en' },
+			},
+			lastUpdated: true,
+			credits: true,
 			social: [
 				{ icon: 'github', label: 'GitHub', href: 'https://github.com/loquix-dev/loquix' },
 			],
@@ -40,11 +45,22 @@ export default defineConfig({
 					label: 'Get started',
 					items: [
 						{ label: 'Overview', slug: 'index' },
+						{ label: 'Quick start', slug: 'quick-start', badge: { text: 'Start here', variant: 'success' } },
 						{ label: 'Installation', slug: 'installation' },
+						{ label: 'Component catalog', slug: 'components', badge: 'v0.4.1' },
 					],
 				},
 				{
-					label: 'Components',
+					label: 'Guides',
+					items: [
+						{ label: 'Theming', slug: 'guides/theming' },
+						{ label: 'Events and state', slug: 'guides/events-and-state' },
+						{ label: 'Accessibility', slug: 'guides/accessibility' },
+						{ label: 'Browser support', slug: 'guides/browser-support' },
+					],
+				},
+				{
+					label: 'Component reference',
 					items: [
 						{ label: 'Chat Container', slug: 'components/chat-container' },
 						{ label: 'Chat Header', slug: 'components/chat-header' },
@@ -67,6 +83,22 @@ export default defineConfig({
 						{ label: 'Follow-up Suggestions', slug: 'components/follow-up-suggestions' },
 						{ label: 'Mode Selector', slug: 'components/mode-selector' },
 						{ label: 'Model Selector', slug: 'components/model-selector' },
+					],
+				},
+				{
+					label: 'Resources',
+					items: [
+						{ label: 'Contributing to docs', slug: 'contributing' },
+						{
+							label: 'Loquix on GitHub',
+							link: 'https://github.com/loquix-dev/loquix',
+							attrs: { target: '_blank', rel: 'noopener' },
+						},
+						{
+							label: 'Package on npm',
+							link: 'https://www.npmjs.com/package/@loquix/core',
+							attrs: { target: '_blank', rel: 'noopener' },
+						},
 					],
 				},
 			],

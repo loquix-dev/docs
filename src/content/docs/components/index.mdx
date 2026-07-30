@@ -1,0 +1,94 @@
+---
+title: Component catalog
+description: Browse the Loquix components documented in the first public documentation release.
+sidebar:
+  badge: v0.4.1
+---
+
+import { Aside, Card, CardGrid } from '@astrojs/starlight/components';
+
+This documentation targets `@loquix/core` **0.4.1**. The first release provides complete reference pages for the primary chat, message, attachment, onboarding, and configuration components.
+
+## Start with these
+
+<CardGrid>
+	<Card title="Complete chat shell" icon="puzzle">
+		[Chat Container](/components/chat-container/) combines the header, history, composer, sidebar, and footer.
+	</Card>
+	<Card title="Prompt entry" icon="star">
+		[Chat Composer](/components/chat-composer/) handles text entry, submit, stop, file drops, and toolbar slots.
+	</Card>
+	<Card title="Conversation history" icon="open-book">
+		[Message List](/components/message-list/) and [Message Item](/components/message-item/) cover scrolling and individual messages.
+	</Card>
+	<Card title="Configuration" icon="setting">
+		[Model Selector](/components/model-selector/) and [Mode Selector](/components/mode-selector/) expose provider-neutral choices.
+	</Card>
+</CardGrid>
+
+## Documented components
+
+### Chat layout
+
+| Component | Use it for |
+| --- | --- |
+| [Chat Container](/components/chat-container/) | Root chat layout and shared surface state. |
+| [Chat Header](/components/chat-header/) | Agent identity and header controls. |
+| [Chat Composer](/components/chat-composer/) | Composite prompt entry and generation controls. |
+| [Prompt Input](/components/prompt-input/) | Standalone textarea-style prompt entry. |
+| [Composer Toolbar](/components/composer-toolbar/) | Left/right composer controls. |
+
+### Messages and generation
+
+| Component | Use it for |
+| --- | --- |
+| [Message List](/components/message-list/) | Scrollable history and auto-scroll. |
+| [Message Item](/components/message-item/) | Sender-aligned message shell. |
+| [Message Content](/components/message-content/) | Text, code, and streaming cursors. |
+| [Message Avatar](/components/message-avatar/) | Participant identity and activity state. |
+| [Message Actions](/components/message-actions/) | Copy, regenerate, feedback, and edit actions. |
+| [Message Attachments](/components/message-attachments/) | Files and image cards inside messages. |
+| [Typing Indicator](/components/typing-indicator/) | Pending and named activity states. |
+| [Generation Controls](/components/generation-controls/) | Stop, pause, and resume actions. |
+| [Reasoning Block](/components/reasoning-block/) | Collapsible reasoning summaries. |
+
+### Attachments
+
+| Component | Use it for |
+| --- | --- |
+| [Drop Zone](/components/drop-zone/) | File drag-and-drop around any content. |
+| [Attachment Chip](/components/attachment-chip/) | Upload progress, errors, retry, and removal. |
+
+### Suggestions and onboarding
+
+| Component | Use it for |
+| --- | --- |
+| [Welcome Screen](/components/welcome-screen/) | Empty conversation onboarding. |
+| [Suggestion Chips](/components/suggestion-chips/) | Reusable prompt suggestions. |
+| [Follow-up Suggestions](/components/follow-up-suggestions/) | Suggested questions after an answer. |
+
+### Configuration
+
+| Component | Use it for |
+| --- | --- |
+| [Mode Selector](/components/mode-selector/) | Chat, research, build, or custom modes. |
+| [Model Selector](/components/model-selector/) | LLM catalog, capabilities, and cost metadata. |
+
+## Available in the package
+
+`@loquix/core` also exports the following component families. They are available in version 0.4.1, while full reference pages are scheduled after the first documentation release:
+
+- **Actions:** Action Button, Action Copy, Action Edit, Action Feedback
+- **Attachments:** Attachment Panel
+- **Reasoning and trust:** Tool Call, Tool Call List, Citation Popover, Source List, Confidence Indicator, Uncertainty Marker, Disclosure Badge, Caveat Notice, Disagreement Marker
+- **Feedback:** Feedback Form, Correction Input
+- **Search:** Search Input, Search Sources, Search Result, Search Results, Search Answer, Search Footer, Search Dialog, Search Panel
+- **Configuration:** Dropdown Select, Parameter Panel, Filter Bar
+- **Templates and guidance:** Template Card, Template Picker, Example Gallery, Nudge Banner
+- **Infrastructure:** Scroll Anchor
+
+<Aside type="note" title="Coverage, not stability">
+	“Documented” describes reference coverage on this website. It is not a separate stability promise. Use the installed package version and its release notes as the source of truth for API compatibility.
+</Aside>
+
+Need a missing reference first? [Open an issue](https://github.com/loquix-dev/docs/issues) or use the “Edit page” link to contribute it.

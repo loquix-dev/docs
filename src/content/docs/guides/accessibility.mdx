@@ -1,0 +1,90 @@
+---
+title: Accessibility
+description: Understand the accessibility built into Loquix and the responsibilities that remain in your application.
+---
+
+import { Aside, Card, CardGrid } from '@astrojs/starlight/components';
+
+Loquix targets **WCAG 2.1 Level AA**. Components use semantic controls, keyboard interaction, ARIA state, focus management, and live status announcements where the pattern requires them.
+
+## What Loquix provides
+
+<CardGrid>
+	<Card title="Keyboard interaction" icon="approve-check">
+		Interactive components support Tab, arrow-key navigation, Enter or Space activation, and Escape dismissal where applicable.
+	</Card>
+	<Card title="Semantic state" icon="puzzle">
+		Controls expose roles and states such as `aria-expanded`, `aria-selected`, `aria-pressed`, `status`, `toolbar`, and `listbox`.
+	</Card>
+	<Card title="Focus behavior" icon="star">
+		Dialogs and popovers manage their focus behavior, while visible controls retain native keyboard focus.
+	</Card>
+	<Card title="Status communication" icon="approve-check">
+		Typing and generation states provide text or accessible labels instead of relying only on animation.
+	</Card>
+</CardGrid>
+
+Automated component stories are checked with axe-core. Automated checks catch many issues, but they do not prove that a complete application is accessible.
+
+## Your application is responsible for
+
+### Meaningful labels
+
+Provide agent names, attachment filenames, visible status text, and instructions that make sense outside visual context.
+
+```html
+<loquix-chat-header agent-name="Research assistant"></loquix-chat-header>
+<loquix-message-avatar name="Research assistant"></loquix-message-avatar>
+```
+
+### Page structure
+
+Keep one logical page heading hierarchy around the chat. Loquix components do not decide whether the surrounding interface is a landmark, dialog, complementary panel, or primary page content.
+
+### Focus after application changes
+
+When your code opens a chat panel, removes content, changes routes, or reports an error, move focus only when that helps the user continue. Do not move focus for every streamed token or new message.
+
+### Streaming announcements
+
+Avoid sending every token to an assertive live region. Announce meaningful state transitions—such as “Generating”, “Stopped”, or “Response complete”—and leave the full response available as normal document content.
+
+### Color and theme overrides
+
+When changing Loquix tokens:
+
+- keep normal text at a contrast ratio of at least 4.5:1;
+- keep large text and essential UI graphics at least 3:1;
+- preserve a visible keyboard focus indicator;
+- never use color as the only indication of error, success, or selection;
+- verify both light and dark themes.
+
+### Motion preferences
+
+Do not add essential meaning only through animation. If your application introduces additional transitions, respect `prefers-reduced-motion`.
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  .app-transition {
+    animation: none;
+    transition: none;
+  }
+}
+```
+
+## Release checklist
+
+- Complete the main task using only the keyboard.
+- Test at 200% browser zoom without losing controls or content.
+- Check the chat with a screen reader in at least one supported browser.
+- Verify focus after dialogs, dropdowns, errors, and route changes.
+- Confirm labels for icon-only actions.
+- Test empty, loading, streaming, complete, stopped, and error states.
+- Check light mode, dark mode, high contrast, and reduced motion.
+- Run axe or an equivalent automated scanner on the integrated page.
+
+<Aside type="note" title="A target, not a certification">
+	Loquix’s WCAG target and component checks do not certify the application that embeds it. Content, workflows, backend errors, custom slot content, and theme overrides remain part of your accessibility review.
+</Aside>
+
+Found an accessibility issue? [Report it in the Loquix repository](https://github.com/loquix-dev/loquix/issues).

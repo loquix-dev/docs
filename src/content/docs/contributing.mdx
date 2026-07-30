@@ -1,0 +1,75 @@
+---
+title: Contributing to the docs
+description: Improve Loquix documentation through focused issues and pull requests.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+The Loquix documentation is public and maintained alongside the component library. Corrections, clearer examples, accessibility improvements, and new component references are welcome.
+
+## Make a small edit
+
+Every documentation page includes an **Edit page** link in its footer. Use it to open the source file on GitHub, make a focused change, and propose a pull request.
+
+Good first contributions include:
+
+- correcting an API table against `custom-elements.json`;
+- adding a missing event detail or slot;
+- improving an example without adding application-specific dependencies;
+- documenting keyboard or screen-reader behavior;
+- fixing a broken link, typo, or unclear explanation.
+
+## Work locally
+
+<Steps>
+
+1. **Clone the documentation repository.**
+
+   ```sh
+   git clone https://github.com/loquix-dev/docs.git
+   cd docs
+   ```
+
+2. **Install dependencies and start the site.**
+
+   ```sh
+   pnpm install
+   pnpm dev
+   ```
+
+3. **Edit or add a page in `src/content/docs`.**
+
+4. **Run the release checks.**
+
+   ```sh
+   pnpm validate
+   ```
+
+5. **Open a focused pull request.** Include a screenshot when the rendered output changes.
+
+</Steps>
+
+## Component page standard
+
+A complete component reference should contain:
+
+- a short purpose statement;
+- a live preview using the published `@loquix/core` package;
+- definition import and practical usage;
+- properties and their corresponding attributes;
+- events with detail shapes;
+- slots, public methods, CSS parts, and custom properties when available;
+- accessibility, state, or security notes where the integration needs them.
+
+Use the generated manifest in `@loquix/core/custom-elements.json` as the API source of truth. Use the component source and Storybook stories to verify behavior and realistic examples.
+
+<Aside type="caution">
+	This site currently targets `@loquix/core` 0.4.1. Do not document unreleased API unless the pull request also updates the pinned dependency and clearly identifies the new target version.
+</Aside>
+
+## Report an issue
+
+- [Documentation issues](https://github.com/loquix-dev/docs/issues)
+- [Component bugs and feature requests](https://github.com/loquix-dev/loquix/issues)
+
+Please include the component name, browser, Loquix version, expected behavior, and a minimal reproduction when reporting a component issue.

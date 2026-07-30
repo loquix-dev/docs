@@ -1,0 +1,119 @@
+---
+title: Theming
+description: Apply Loquix design tokens, dark mode, component variables, and CSS parts.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+Loquix uses CSS custom properties for design decisions and Shadow DOM for component encapsulation. Theme the system with shared tokens, then use component variables or CSS parts for focused changes.
+
+## Load the base tokens
+
+Import the variables once in your browser entry point:
+
+```js
+import '@loquix/core/tokens/variables.css';
+```
+
+The shared tokens cover color, surfaces, typography, spacing, states, radius, and motion:
+
+```css
+:root {
+  --loquix-ai-color: #7c3aed;
+  --loquix-user-color: #2563eb;
+  --loquix-surface-bg: #ffffff;
+  --loquix-text-color: #111827;
+  --loquix-border-color: #e5e7eb;
+  --loquix-border-radius: 12px;
+  --loquix-font-family: system-ui, sans-serif;
+}
+```
+
+## Apply a brand theme
+
+Custom properties inherit through Shadow DOM, so they can be scoped to the whole app or one chat:
+
+```css
+.acme-assistant {
+  --loquix-ai-color: #e45a34;
+  --loquix-ai-color-subtle: #fff0eb;
+  --loquix-user-color: #3558d4;
+  --loquix-message-user-bg: #edf1ff;
+  --loquix-input-focus-color: #e45a34;
+  --loquix-send-button-bg: #e45a34;
+  --loquix-border-radius: 18px;
+}
+```
+
+<LivePreview label="Scoped brand tokens">
+	<div style="--loquix-ai-color: #e45a34; --loquix-ai-color-subtle: #fff0eb; --loquix-message-user-bg: #edf1ff; --loquix-input-focus-color: #e45a34; --loquix-send-button-bg: #e45a34; width: min(100%, 40rem); margin-inline: auto;">
+		<loquix-message-item sender="assistant" status="complete" model="Acme" show-avatar>
+			<loquix-message-content>Theme one chat without affecting the rest of the page.</loquix-message-content>
+		</loquix-message-item>
+		<loquix-chat-composer placeholder="Ask Acme anything…"></loquix-chat-composer>
+	</div>
+</LivePreview>
+
+## Dark mode
+
+Load the built-in dark token overrides:
+
+```js
+import '@loquix/core/tokens/themes/dark';
+```
+
+Then apply either supported selector to an ancestor:
+
+```html
+<main data-theme="dark">
+  <loquix-chat-container>…</loquix-chat-container>
+</main>
+```
+
+```html
+<loquix-chat-container class="loquix-theme-dark">
+  …
+</loquix-chat-container>
+```
+
+For an application-level theme switch, update the root attribute:
+
+```js
+document.documentElement.dataset.theme = 'dark';
+```
+
+<Aside type="note">
+	The theme import contains only overrides. Keep the base `variables.css` import as well.
+</Aside>
+
+## Choose the right styling layer
+
+<Steps>
+
+1. **Shared tokens** — use global `--loquix-*` variables for brand color, typography, surfaces, spacing, and state colors.
+2. **Component variables** — use the custom properties listed on each component page for a local design adjustment.
+3. **CSS parts** — use `::part()` when a documented internal element needs layout, border, shadow, or state styling.
+4. **Slots** — replace content structurally when styling alone cannot express the design.
+
+</Steps>
+
+```css title="Component variable and CSS part"
+loquix-chat-composer {
+  --loquix-composer-container-border-radius: 20px;
+}
+
+loquix-chat-composer::part(send-button) {
+  box-shadow: 0 8px 24px rgb(228 90 52 / 28%);
+}
+```
+
+## Theme contract
+
+- Prefer documented custom properties and parts over selectors inside Shadow DOM.
+- Do not rely on undocumented internal class names.
+- Keep focus states visible and maintain text contrast when changing colors.
+- Test both light and dark themes after overriding semantic tokens.
+- Scope product-specific themes to a container when multiple assistants share one page.
+
+Next, review the application responsibilities in [Accessibility](/guides/accessibility/).

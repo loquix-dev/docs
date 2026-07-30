@@ -1,0 +1,80 @@
+<div class="quick-start-demo" data-quick-start-demo>
+	<loquix-chat-container layout="full" mode="chat">
+		<loquix-chat-header slot="header" agent-name="Loquix Assistant"></loquix-chat-header>
+		<loquix-message-list slot="messages" auto-scroll show-scroll-anchor>
+			<loquix-message-item sender="assistant" status="complete" model="Loquix">
+				<loquix-message-content>
+					This demo is wired to the same submit event used in the quick-start code. Send a message to try it.
+				</loquix-message-content>
+			</loquix-message-item>
+		</loquix-message-list>
+		<loquix-chat-composer
+			slot="composer"
+			variant="contained"
+			placeholder="Send a message…"
+			max-length="4000"
+		></loquix-chat-composer>
+	</loquix-chat-container>
+</div>
+
+<script>
+	document.querySelectorAll<HTMLElement>('[data-quick-start-demo]').forEach((demo) => {
+		if (demo.dataset.ready) return;
+		demo.dataset.ready = 'true';
+
+		const list = demo.querySelector('loquix-message-list');
+		const composer = demo.querySelector('loquix-chat-composer') as
+			| (HTMLElement & { streaming: boolean })
+			| null;
+		let responseTimer = 0;
+
+		const appendMessage = (
+			sender: 'user' | 'assistant',
+			content: string,
+			status: 'complete' | 'pending' = 'complete',
+		) => {
+			if (!list) return;
+			const item = document.createElement('loquix-message-item');
+			item.setAttribute('sender', sender);
+			item.setAttribute('status', status);
+			if (sender === 'assistant') item.setAttribute('model', 'Loquix');
+
+			if (content) {
+				const body = document.createElement('loquix-message-content');
+				body.textContent = content;
+				item.append(body);
+			}
+
+			list.append(item);
+		};
+
+		demo.addEventListener('loquix-submit', (event) => {
+			const { content } = (event as CustomEvent<{ content: string }>).detail;
+			appendMessage('user', content);
+			if (composer) composer.streaming = true;
+
+			window.clearTimeout(responseTimer);
+			responseTimer = window.setTimeout(() => {
+				appendMessage(
+					'assistant',
+					`Your UI received “${content}”. Replace this local response with a call to your AI backend.`,
+				);
+				if (composer) composer.streaming = false;
+			}, 550);
+		});
+
+		demo.addEventListener('loquix-stop', () => {
+			window.clearTimeout(responseTimer);
+			if (composer) composer.streaming = false;
+			appendMessage('assistant', 'Generation stopped.');
+		});
+	});
+</script>
+
+<style>
+	.quick-start-demo,
+	.quick-start-demo loquix-chat-container {
+		width: 100%;
+		height: 30rem;
+	}
+</style>
