@@ -3,18 +3,23 @@ import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 
 export default defineConfig({
-	site: 'https://docs.loquix.dev',
+	site: 'https://loquix.dev',
+	base: '/docs',
 	integrations: [
 		starlight({
 			title: 'Loquix',
 			description: 'Web Components for production-ready AI chat interfaces.',
-			favicon: '/og.png',
+			favicon: '/favicon.svg',
+			components: {
+				SiteTitle: './src/components/SiteTitle.astro',
+			},
 			locales: {
 				root: { label: 'English', lang: 'en' },
 			},
 			lastUpdated: true,
 			credits: true,
 			social: [
+				{ icon: 'open-book', label: 'Storybook', href: 'https://loquix.dev/storybook/' },
 				{ icon: 'github', label: 'GitHub', href: 'https://github.com/loquix-dev/loquix' },
 			],
 			editLink: {
@@ -29,14 +34,14 @@ export default defineConfig({
 					tag: 'meta',
 					attrs: {
 						property: 'og:image',
-						content: 'https://docs.loquix.dev/og.png',
+						content: 'https://loquix.dev/docs/og.png',
 					},
 				},
 				{
 					tag: 'meta',
 					attrs: {
 						name: 'twitter:image',
-						content: 'https://docs.loquix.dev/og.png',
+						content: 'https://loquix.dev/docs/og.png',
 					},
 				},
 			],
@@ -89,6 +94,11 @@ export default defineConfig({
 					label: 'Resources',
 					items: [
 						{ label: 'Contributing to docs', slug: 'contributing' },
+						{
+							label: 'Storybook',
+							link: 'https://loquix.dev/storybook/',
+							attrs: { target: '_blank', rel: 'noopener' },
+						},
 						{
 							label: 'Loquix on GitHub',
 							link: 'https://github.com/loquix-dev/loquix',

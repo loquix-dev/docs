@@ -11,7 +11,7 @@ pnpm install
 pnpm dev
 ```
 
-The site will be available at `http://localhost:4321`.
+The site will be available at `http://localhost:4321/docs/`.
 
 ## Writing documentation
 

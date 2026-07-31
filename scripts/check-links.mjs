@@ -5,6 +5,7 @@ import process from 'node:process';
 const root = process.cwd();
 const docsDirectory = path.join(root, 'src/content/docs');
 const publicDirectory = path.join(root, 'public');
+const base = '/docs';
 
 async function walk(directory) {
 	const entries = await readdir(directory, { withFileTypes: true });
@@ -23,9 +24,9 @@ function routeFor(file) {
 		.replaceAll(path.sep, '/')
 		.replace(/\.(md|mdx)$/, '');
 
-	if (relative === 'index') return '/';
-	if (relative.endsWith('/index')) return `/${relative.slice(0, -'/index'.length)}/`;
-	return `/${relative}/`;
+	if (relative === 'index') return `${base}/`;
+	if (relative.endsWith('/index')) return `${base}/${relative.slice(0, -'/index'.length)}/`;
+	return `${base}/${relative}/`;
 }
 
 function normalizeRoute(url) {
@@ -38,7 +39,7 @@ const docsFiles = (await walk(docsDirectory)).filter((file) => /\.(md|mdx)$/.tes
 const publicFiles = await walk(publicDirectory);
 const routes = new Set(docsFiles.map(routeFor));
 const assets = new Set(
-	publicFiles.map((file) => `/${path.relative(publicDirectory, file).replaceAll(path.sep, '/')}`),
+	publicFiles.map((file) => `${base}/${path.relative(publicDirectory, file).replaceAll(path.sep, '/')}`),
 );
 const failures = [];
 
