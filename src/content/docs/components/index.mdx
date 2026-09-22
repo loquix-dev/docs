@@ -7,7 +7,7 @@ sidebar:
 
 import { Aside, Card, CardGrid } from '@astrojs/starlight/components';
 
-This documentation targets `@loquix/core` **0.4.1**. Reference pages cover the chat, message, action, reasoning and trust, search, attachment, onboarding, and configuration components, and the remaining families are being added family by family.
+This documentation targets `@loquix/core` **0.4.1**. Reference pages cover the chat, message, action, reasoning and trust, search, attachment, feedback, onboarding, and configuration components. The remaining configuration, template, and infrastructure components are being added next.
 
 ## Start with these
 
@@ -89,6 +89,14 @@ This documentation targets `@loquix/core` **0.4.1**. Reference pages cover the c
 | --- | --- |
 | [Drop Zone](/docs/components/drop-zone/) | File drag-and-drop around any content. |
 | [Attachment Chip](/docs/components/attachment-chip/) | Upload progress, errors, retry, and removal. |
+| [Attachment Panel](/docs/components/attachment-panel/) | Picker, limits, and the chip grid for staged files. |
+
+### Feedback
+
+| Component | Use it for |
+| --- | --- |
+| [Feedback Form](/docs/components/feedback-form/) | Rating with reason chips and a comment. |
+| [Correction Input](/docs/components/correction-input/) | Letting a user propose a better answer. |
 
 ### Suggestions and onboarding
 
@@ -109,8 +117,6 @@ This documentation targets `@loquix/core` **0.4.1**. Reference pages cover the c
 
 `@loquix/core` also exports the following component families. They are available in version 0.4.1, while full reference pages are scheduled after the first documentation release:
 
-- **Attachments:** Attachment Panel
-- **Feedback:** Feedback Form, Correction Input
 - **Configuration:** Dropdown Select, Parameter Panel, Filter Bar
 - **Templates and guidance:** Template Card, Template Picker, Example Gallery, Nudge Banner
 - **Infrastructure:** Scroll Anchor

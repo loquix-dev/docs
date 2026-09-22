@@ -1,0 +1,87 @@
+---
+title: Correction Input
+description: Inline form letting a user propose a corrected version of an assistant answer.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Feedback component</p>
+
+`<loquix-correction-input>` goes a step beyond a rating: it asks the user what the answer should have said. The original is shown struck through above a textarea, with an optional field for why the change is needed.
+
+<div class="component-meta">
+	<span>loquix-correction-input</span>
+	<span>original shown struck through</span>
+	<span>text-only rendering</span>
+</div>
+
+## Preview
+
+<LivePreview label="Proposing a correction" tall>
+	<loquix-correction-input
+		original="The refund window is 14 days from purchase."
+		value="The refund window is 30 days from delivery."
+		reason="Contradicts the current policy document."
+	></loquix-correction-input>
+</LivePreview>
+
+## Usage
+
+```js
+import '@loquix/core/define/define-correction-input';
+```
+
+```html
+<loquix-correction-input original="The refund window is 14 days from purchase."></loquix-correction-input>
+```
+
+```js
+const correction = document.querySelector('loquix-correction-input');
+
+correction.addEventListener('loquix-correction-submit', (event) => {
+  const { correction: text, reason, original } = event.detail;
+
+  fileCorrection(messageId, { text, reason, original });
+});
+
+correction.addEventListener('loquix-correction-cancel', () => {
+  closeCorrectionUi();
+});
+```
+
+Submit stays disabled until the correction has content, and also until the reason has content when `reasonRequired` is set — so an empty submission cannot reach your handler.
+
+<Aside type="note" title="Everything renders as text">
+	The original, the correction, and the reason are all rendered as text rather than markup. User-supplied content cannot inject HTML into the page through this component.
+</Aside>
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `original` | `original` | `string` | `''` | The assistant text being corrected. Rendered struck through above the field. Omit it to show the form alone. |
+| `value` | `value` | `string` | `''` | The correction text. Updates as the user types. |
+| `reason` | `reason` | `string` | `''` | The reason text. Updates as the user types. |
+| `reasonRequired` | `reason-required` | `boolean` | `false` | Requires a non-empty reason before Submit is enabled. |
+
+## Events
+
+| Event | Detail | Description |
+| --- | --- | --- |
+| `loquix-correction-submit` | `{ correction, reason?, original? }` | Fired when Submit is clicked. |
+| `loquix-correction-cancel` | — | Fired when Cancel is clicked. |
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `container` | Outer wrapper. |
+| `original` | The strikethrough block holding the original text. |
+| `field` | One labelled field, correction or reason. |
+| `textarea` | The correction textarea. |
+| `input` | The reason input. |
+| `submit` | Submit button. |
+| `cancel` | Cancel button. |
+
+Pair this with [Disagreement Marker](/docs/components/disagreement-marker/) to leave a visible record on the disputed message, or with [Feedback Form](/docs/components/feedback-form/) when a rating is enough.

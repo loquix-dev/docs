@@ -1,0 +1,97 @@
+---
+title: Feedback Form
+description: Thumbs rating that opens reason chips and an optional comment, reported as one event.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Feedback component</p>
+
+`<loquix-feedback-form>` takes a rating past the thumb. Picking a sentiment opens a card with reason chips matched to that sentiment and a comment box, and the whole thing arrives as one event when the user hits Send.
+
+<div class="component-meta">
+	<span>loquix-feedback-form</span>
+	<span>sentiment then reason</span>
+	<span>one submit event</span>
+</div>
+
+## Preview
+
+<LivePreview label="Rating with reasons" tall>
+	<loquix-feedback-form value="negative"></loquix-feedback-form>
+</LivePreview>
+
+Shown after a negative rating, so the reason card is open. Pick a chip, type a comment, and Send.
+
+## Usage
+
+```js
+import '@loquix/core/define/define-feedback-form';
+```
+
+```html
+<loquix-feedback-form></loquix-feedback-form>
+```
+
+```js
+const form = document.querySelector('loquix-feedback-form');
+
+form.addEventListener('loquix-feedback-submit', (event) => {
+  const { sentiment, reason, comment } = event.detail;
+
+  recordFeedback(messageId, { sentiment, reason, comment });
+});
+```
+
+<Aside type="note" title="One event, not three">
+	The two thumb buttons inside are [Action Feedback](/docs/components/action-feedback/) elements, but their `loquix-feedback` events are stopped at the boundary. You only ever see `loquix-feedback-submit`, so there is no risk of double-counting a rating.
+</Aside>
+
+## Reasons
+
+The chips depend on which thumb was picked.
+
+| Sentiment | Reason ids |
+| --- | --- |
+| `positive` | `accurate`, `well-written`, `helpful`, `other` |
+| `negative` | `inaccurate`, `off-topic`, `unsafe`, `other` |
+
+The event carries the stable id, never the localized chip label, so your analytics stay comparable across languages.
+
+Set `allowReason` to `false` to skip the card entirely and submit on the thumb alone. Set `requireCommentOnDown` when a negative rating should not count without a written explanation — Send stays disabled until the comment has content.
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `value` | `value` | `'positive' \| 'negative' \| null` | `null` | Selected sentiment, or `null` when neither is picked. |
+| `allowReason` | `allow-reason` | `boolean` | `true` | Whether to open the reason and comment card after a sentiment is picked. |
+| `requireCommentOnDown` | `require-comment-on-down` | `boolean` | `false` | Requires a non-empty comment before Send is enabled on negative feedback. |
+
+## Events
+
+| Event | Detail | Description |
+| --- | --- | --- |
+| `loquix-feedback-submit` | `{ sentiment, reason?, comment? }` | Fired when the user clicks Send. |
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `buttons` | The thumbs row. |
+| `form` | The reason and comment card. |
+| `reasons` | The radiogroup of reason chips. |
+| `chip` | A single reason chip. |
+| `textarea` | The comment box. |
+| `submit` | Send button. |
+| `cancel` | Cancel button. |
+| `thanks` | The message shown after submitting. |
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-ai-color` | Active chip background and primary button color. |
+
+For a bare thumbs-up and thumbs-down without the follow-up card, use [Action Feedback](/docs/components/action-feedback/) directly. To let a user propose a better answer rather than rate the one they got, see [Correction Input](/docs/components/correction-input/).

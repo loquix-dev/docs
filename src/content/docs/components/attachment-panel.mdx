@@ -1,0 +1,130 @@
+---
+title: Attachment Panel
+description: File picker and chip grid for managing the attachments on a message.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Attachment component</p>
+
+`<loquix-attachment-panel>` holds the files staged for the next message. It provides the picker, enforces the count, size, and type limits, and renders each file as an [Attachment Chip](/docs/components/attachment-chip/) with its own progress and error state.
+
+<div class="component-meta">
+	<span>loquix-attachment-panel</span>
+	<span>picker and chip grid</span>
+	<span>client-side limits</span>
+</div>
+
+## Preview
+
+<LivePreview label="Staged files">
+	<loquix-attachment-panel
+		trigger-label="Add files"
+		data-props='{"attachments":[{"id":"brief","filename":"product-brief.pdf","filetype":"application/pdf","size":284000,"status":"complete"},{"id":"data","filename":"research-data.csv","filetype":"text/csv","size":1840000,"status":"uploading","progress":62},{"id":"logo","filename":"logo-draft.png","filetype":"image/png","size":940000,"status":"error","error":"Upload failed"}]}'
+	></loquix-attachment-panel>
+</LivePreview>
+
+Three chips in the three states that matter: complete, uploading with progress, and failed.
+
+## Usage
+
+```js
+import '@loquix/core/define/define-attachment-panel';
+```
+
+```html
+<loquix-attachment-panel accepted-types="image/*,.pdf" max-files="5"></loquix-attachment-panel>
+```
+
+The panel reports what the user picked; uploading is yours to do. Update each attachment's `status` and `progress` as the upload runs.
+
+```js
+const panel = document.querySelector('loquix-attachment-panel');
+
+panel.addEventListener('loquix-attachment-add', async (event) => {
+  for (const attachment of event.detail.attachments) {
+    await upload(attachment.file, (percent) => {
+      attachment.progress = percent;
+      panel.attachments = [...panel.attachments];
+    });
+  }
+});
+
+panel.addEventListener('loquix-attachment-remove', (event) => {
+  cancelUpload(event.detail.id);
+});
+```
+
+Reassigning the array is what triggers the re-render — mutating an attachment in place does not.
+
+## The attachment object
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | `string` | yes | Unique identifier. |
+| `filename` | `string` | yes | Display name. |
+| `filetype` | `string` | yes | MIME type or extension shorthand. |
+| `size` | `number` | yes | Size in bytes. |
+| `status` | `'pending' \| 'uploading' \| 'complete' \| 'error'` | yes | Upload state. |
+| `file` | `File` | no | The picked `File`, present for local uploads. |
+| `url` | `string` | no | Location, when the file is already hosted. |
+| `progress` | `number` | no | Upload progress, 0 to 100. |
+| `error` | `string` | no | Message shown when `status` is `error`. |
+| `purpose` | `'style' \| 'subject' \| 'source'` | no | Semantic role of the file. |
+
+## Limits
+
+| Property | Default | Enforces |
+| --- | --- | --- |
+| `maxFiles` | `10` | How many files can be staged. |
+| `maxSize` | `10485760` (10 MB) | Per-file size. |
+| `acceptedTypes` | `'*'` | MIME types or extensions the picker accepts. |
+| `multiple` | `true` | Whether more than one file can be picked at a time. |
+
+<Aside type="caution" title="These limits are a convenience, not a guard">
+	They shape the picker and stop obvious mistakes in the browser. Enforce the real limits on your server too — a client-side check protects nobody from a crafted request.
+</Aside>
+
+## Drag and drop
+
+The panel has no drop target of its own. Dragging files onto the composer is handled one level up by [Chat Composer](/docs/components/chat-composer/) through [Drop Zone](/docs/components/drop-zone/), which then feeds the panel. Use those when you want drop support rather than wiring it here.
+
+## Custom trigger
+
+Set `noTrigger` and provide your own button when the upload control belongs elsewhere in your layout — inside a [Composer Toolbar](/docs/components/composer-toolbar/), for instance. The `trigger` slot replaces the built-in button in place; `trigger-icon` swaps only its icon.
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `attachments` | `attachments` | `Attachment[]` | `[]` | Currently staged files. |
+| `acceptedTypes` | `accepted-types` | `string` | `'*'` | Accepted MIME types or extensions. |
+| `maxFiles` | `max-files` | `number` | `10` | Maximum number of files. |
+| `maxSize` | `max-size` | `number` | `10485760` | Maximum size per file, in bytes. |
+| `multiple` | `multiple` | `boolean` | `true` | Allow selecting several files at once. |
+| `disabled` | `disabled` | `boolean` | `false` | Disables the panel. |
+| `noTrigger` | `no-trigger` | `boolean` | `false` | Hides the built-in trigger button. |
+| `triggerLabel` | `trigger-label` | `string` | localized | Label for the built-in trigger. |
+
+## Events
+
+| Event | Detail | Description |
+| --- | --- | --- |
+| `loquix-attachment-add` | `{ attachments }` | Fired when files are added through the picker. |
+| `loquix-attachment-remove` | `{ id }` | Re-dispatched from the chip whose remove button was clicked. |
+
+## Slots
+
+| Slot | Purpose |
+| --- | --- |
+| `trigger` | A custom upload button replacing the built-in one. |
+| `trigger-icon` | A custom icon for the built-in button. |
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `panel` | The panel container. |
+| `chips` | The chip grid. |
+| `trigger` | The upload trigger button. |

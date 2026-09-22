@@ -324,7 +324,10 @@ header.header {
 .loquix-preview loquix-search-answer,
 .loquix-preview loquix-search-footer,
 .loquix-preview loquix-search-panel,
-.loquix-preview loquix-search-dialog {
+.loquix-preview loquix-search-dialog,
+.loquix-preview loquix-attachment-panel,
+.loquix-preview loquix-correction-input,
+.loquix-preview loquix-feedback-form {
 	width: min(100%, 40rem);
 	margin-inline: auto;
 }
