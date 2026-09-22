@@ -3,7 +3,7 @@ title: HTTP adapter
 description: Turn an HTTP endpoint into an AgentProvider, with streaming, cancellation, and error handling already wired up.
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
 
 `@loquix/adapter-http` builds an [`AgentProvider`](/docs/integration/agent-provider/) for you out of a URL. Point it at your own backend and it POSTs the conversation, reads the response as it streams in, and turns it into the plain-text `ReadableStream` the interface expects — including the abort handling, the non-2xx rejections, and the frame-by-frame decoding a hand-written provider would otherwise have to implement itself. It replaces the `send()` method on that page, not the interface: everything the agent controller expects from a provider still applies.
 
@@ -11,9 +11,31 @@ The package has zero runtime dependencies and holds no credentials. The URL it P
 
 ## Install
 
-```bash
-pnpm add @loquix/adapter-http
-```
+<Tabs syncKey="package-manager">
+	<TabItem label="npm">
+
+	```sh
+	npm install @loquix/adapter-http
+	```
+
+	</TabItem>
+	<TabItem label="pnpm">
+
+	```sh
+	pnpm add @loquix/adapter-http
+	```
+
+	</TabItem>
+	<TabItem label="yarn">
+
+	```sh
+	yarn add @loquix/adapter-http
+	```
+
+	</TabItem>
+</Tabs>
+
+`@loquix/core` (`>=0.5.0`) is a peer dependency, needed only for its types.
 
 ## A ten-minute example
 
@@ -65,19 +87,21 @@ Expects [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Se
 
 ### `ndjson`
 
-Expects one JSON object per line, separated by `\n`. The default parser reads `text`, `content`, or `delta` (in that order) off each parsed object and returns whichever is a string. A line that parses as JSON but carries none of those three fields is skipped — not an error, just no text to emit for that line.
+Expects one JSON object per line, separated by `\n`. The default parser picks the first of `text`, `content`, or `delta` (in that order) that is *present* on the parsed object — `parsed.text ?? parsed.content ?? parsed.delta` — and emits it only if that one field is a string. It does not fall through to the next field if the one it picked is present but not a string: `{"text": 42, "content": "hi"}` emits nothing, because `text` was chosen and failed the string check, not `"hi"`. A line that parses as JSON but has none of the three fields present is skipped the same way — not an error, just no text to emit for that line.
 
 ### `text`
 
 Expects nothing in particular. Every byte that arrives is decoded and passed straight through as a chunk of the output stream, with no framing and no parsing. Choose this when your backend already streams plain text and any structure — including a literal `[DONE]` — should reach the caller as ordinary bytes rather than being interpreted by the adapter.
 
 <Aside type="caution">
-A malformed line is handled differently depending on where it goes wrong. If a line arrives that the default `ndjson`/`sse` parser cannot make sense of — invalid JSON, or JSON with none of the expected fields — the adapter skips that one line and keeps streaming; a single hiccup on the wire does not fail the whole response. But if you supply your own `parse` and it throws, that exception is not caught: it propagates out of the stream, and whatever text had already accumulated in the response is lost. The asymmetry is deliberate. A bad line from the network is an expected condition the library can recover from; an exception from your own `parse` is a bug in your code, and swallowing it would hide that bug behind a silently truncated response instead of surfacing it.
+Skip-on-malformed is an `ndjson` behavior, not an `sse` one. The default `ndjson` parser wraps its `JSON.parse` in a `try`/`catch`: a line that isn't valid JSON is skipped and streaming continues, so one hiccup on the wire does not fail the whole response. The default `sse` parser does no parsing at all — it returns each frame's joined `data:` payload verbatim — so there is nothing for it to reject; a "malformed" SSE frame (say, one whose `data:` payload happens to be truncated JSON) still reaches the caller as text, unchanged.
+
+If you supply your own `parse` and it throws, that exception is not caught, regardless of transport: it propagates out of the stream, and any chunk still queued and not yet delivered to the consumer is discarded — text the consumer already read via an earlier `reader.read()` is not retracted. The asymmetry with the default `ndjson` parser is deliberate. A bad line from the network is an expected condition the library can recover from; an exception from your own `parse` is a bug in your code, and swallowing it would hide that bug behind a silently truncated response instead of surfacing it.
 </Aside>
 
 ## Errors
 
-Every rejection from `send()` is an `HttpAgentError`, an `Error` subclass with a `status: number`:
+`send()` rejects with `HttpAgentError`, an `Error` subclass with a `status: number`, in exactly two cases:
 
 ```ts
 class HttpAgentError extends Error {
@@ -85,25 +109,32 @@ class HttpAgentError extends Error {
 }
 ```
 
-Two things reject with it:
-
 - **A non-2xx response.** The adapter tries to read the body as JSON and use its `message` or `error` field as the error text; if the body isn't JSON, it falls back to the response's status text. Either way, `status` is the response's actual HTTP status.
 - **A 2xx response with no body at all.** Some servers can return `200 OK` with an empty body — nothing to stream. The adapter treats this the same as a failure: it rejects with `HttpAgentError` and `status: 502`, since there is no real response to hand the controller.
 
-A malformed *line inside* a body that did arrive is not one of these cases — see the caution above. Only a missing body, or a non-2xx status, fails `send()` itself.
+Both happen after `fetch` itself has already resolved. Anything that keeps `fetch` from resolving at all rejects `send()` unwrapped, with whatever `fetch` (or your own `fetch` replacement) rejects with — the adapter does not catch or wrap it:
+
+- A network failure — DNS, connection refused, offline — rejects with a `TypeError`, `fetch`'s own error for that case.
+- A `signal` that aborts before the response arrives rejects with a `DOMException` named `AbortError`. See "Cancellation" below for the case where the abort instead happens mid-stream, after `fetch` has already resolved.
+
+A malformed *line inside* a body that did arrive is not one of these cases — see the caution above. Only a missing body, a non-2xx status, or `fetch` itself failing or aborting before it resolves, fails `send()`.
 
 ## Cancellation
 
 Cancellation flows in both directions between the returned stream and the underlying `fetch`:
 
 - **Cancelling the stream cancels the response.** If the code consuming `response.stream` calls `reader.cancel()` (or the controller's own `abort()` does the equivalent), the adapter cancels the underlying response body too, so the connection doesn't keep receiving data nobody is reading.
-- **Aborting the signal errors the stream.** The `signal` on `AgentSendOptions` is forwarded to `fetch`. If it aborts mid-response, the next read from `response.stream` rejects with a `DOMException` named `AbortError`, and the underlying body is cancelled.
+- **Aborting the signal errors the stream.** The `signal` on `AgentSendOptions` is forwarded to `fetch`. If it aborts mid-response — after `send()` has already resolved with a stream — the next read from `response.stream` rejects with a `DOMException` named `AbortError`, and the underlying body is cancelled.
+
+That covers an abort *after* the response has arrived. An abort before `fetch` resolves — for example, the signal is already aborted when you call `send()` — never produces a stream to cancel: it rejects `send()` itself with the same `AbortError`, as described under "Errors" above.
 
 `[DONE]` ends the stream the same way for `sse` and `ndjson`: as soon as either transport reads a frame or line whose payload is exactly `[DONE]`, it closes the output stream and cancels the underlying response body — even if the server keeps the connection open past that point. The `text` transport never does this: with no framing to interpret, a literal `[DONE]` in the byte stream is just more text, passed through like everything else.
 
 ## The `parse` hook
 
 Set `parse` to replace the default per-transport parsing entirely. It receives one decoded chunk — one `sse` frame's joined `data:` payload, or one `ndjson` line — and returns the text to emit, or `null` to emit nothing for that chunk. It is never called for the `text` transport, which has no per-chunk parsing step to override.
+
+`parse` does not see every chunk, even so. An `sse` frame with no `data:` lines at all (only `event:`, `id:`, or comment lines) never reaches it, and neither does a payload that is exactly `[DONE]` — both are handled before your hook runs, for either transport it applies to.
 
 The most common reason to supply one is a vendor API whose stream doesn't match the adapter's own `text`/`content`/`delta` convention. For an OpenAI-shaped SSE stream, where each frame is a JSON object with the token under `choices[0].delta.content`:
 
@@ -120,7 +151,7 @@ const provider = createHttpAgentProvider({
 Given frames whose payloads are `{"choices":[{"delta":{"content":"Hel"}}]}` and `{"choices":[{"delta":{"content":"lo"}}]}`, this accumulates to `"Hello"`.
 
 <Aside type="caution">
-Write `parse` defensively. As covered under "Transports" above, an exception thrown out of `parse` is not caught — it errors the stream and discards whatever text had already accumulated, rather than being treated like a malformed line and skipped.
+Write `parse` defensively. As covered under "Transports" above, an exception thrown out of `parse` is not caught — it errors the stream and discards any chunk still queued and not yet delivered to the consumer, rather than being treated like a malformed `ndjson` line and skipped. Text already delivered to the consumer before the throw is not retracted.
 </Aside>
 
 ## Where this fits
