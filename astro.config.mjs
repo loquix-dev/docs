@@ -60,6 +60,7 @@ export default defineConfig({
 					items: [
 						{ label: 'Overview', slug: 'integration' },
 						{ label: 'Agent provider', slug: 'integration/agent-provider' },
+						{ label: 'Agent controller', slug: 'integration/agent-controller' },
 					],
 				},
 				{

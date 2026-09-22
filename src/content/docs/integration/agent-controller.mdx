@@ -1,0 +1,111 @@
+---
+title: Agent controller
+description: The Lit reactive controller that owns conversation state and drives an agent provider.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+The **agent controller** is the piece between your [agent provider](/docs/integration/agent-provider/) and Loquix components. It holds the conversation history, tracks the send lifecycle as a small state machine, and calls your provider — components never call a provider directly. See the [integration overview](/docs/integration/) for how the three pieces relate.
+
+You do not write this piece. You construct it with a provider and, optionally, some configuration, and then call its methods from your host component.
+
+```ts
+import { AgentController } from '@loquix/core/controllers/agent.controller';
+
+const agent = new AgentController(this, provider, {
+  model: 'claude-sonnet-4-20250514',
+});
+```
+
+## States
+
+The controller's `state` is one of:
+
+| State | Meaning |
+| --- | --- |
+| `idle` | No send in progress. The starting state, and where `abort()` and `reset()` return to. |
+| `sending` | `send()` has been called and is awaiting the provider's `send()` promise. |
+| `streaming` | The response stream is being read and its chunks are accumulating. |
+| `paused` | Streaming was suspended with `pause()`; chunks continue to arrive but are buffered rather than applied. |
+| `complete` | The response finished and was appended to `messages` as an assistant message. |
+| `error` | `send()` rejected, or the stream errored, outside of an abort. |
+
+## Methods
+
+| Method | Signature | Effect |
+| --- | --- | --- |
+| `send` | `send(content: string, attachments?: AgentMessageAttachment[]): Promise<void>` | Appends a user message, calls the provider, and streams the response. |
+| `pause` | `pause(): void` | Suspends stream consumption. Buffered chunks are not lost — `resume()` flushes them. |
+| `resume` | `resume(): void` | Resumes a paused stream. |
+| `abort` | `abort(): void` | Cancels the in-flight send or stream and returns to `idle`. No-op while `idle` or `complete`. |
+| `reset` | `reset(): void` | Aborts, clears `messages`, and returns to `idle`. |
+| `setMessages` | `setMessages(messages: AgentMessage[]): void` | Replaces the conversation history, for restoring a persisted conversation. Throws if called while `sending`, `streaming`, or `paused`. |
+| `setProvider` | `setProvider(provider: AgentProvider): void` | Swaps the provider. Aborts an in-flight send or stream first if one is active. |
+| `updateOptions` | `updateOptions(partial: Partial<AgentControllerOptions>): void` | Merges new values into the controller's options, such as `model` or `systemPrompt`, without touching the provider or the conversation. |
+
+<Aside type="caution">
+Calling `send()` again while the controller is `sending`, `streaming`, or `paused` does not cancel the request already in flight. It throws instead — the error message names the current state and tells you to call `abort()` first. Only `abort()` touches the underlying `AbortController`.
+</Aside>
+
+## Read-only properties
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `state` | `AgentState` | The current state, one of the six values above. |
+| `messages` | `readonly AgentMessage[]` | The full conversation history, including the in-progress user message once `send()` has been called. |
+| `currentResponseText` | `string` | Text accumulated so far for the response currently streaming (or last streamed). Empty before the first chunk arrives. |
+| `isStreaming` | `boolean` | `true` while `state` is `streaming` or `paused`. |
+
+## Options
+
+The third constructor argument configures the controller. Everything is optional.
+
+| Option | Type | Default |
+| --- | --- | --- |
+| `model` | `string` | none |
+| `params` | `Record<string, unknown>` | none |
+| `systemPrompt` | `string` | none |
+| `sendTimeout` | `number` (ms) | `60_000` |
+| `maxMessageLength` | `number` | `100_000` |
+| `maxMessages` | `number` | `200` |
+
+`model`, `params`, and `systemPrompt` are passed straight through to the provider's `send()` as part of `AgentSendOptions` on every call; see the [agent provider page](/docs/integration/agent-provider/) for how a provider is expected to use them.
+
+`maxMessageLength` rejects an individual message whose content is too long; `maxMessages` rejects a `send()` that would push the conversation over the cap, counting both the new user message and the assistant response it will produce. Both throw synchronously from `send()`, before any request is made.
+
+### `sendTimeout`
+
+`sendTimeout` does not bound only the wait for a response to start. On every `send()`, the controller composes its own abort signal with `AbortSignal.timeout(sendTimeout)` using `AbortSignal.any([...])`, and passes the combined signal to `provider.send()` as `options.signal`. A provider that forwards that signal to `fetch` — which is what the [example provider](/docs/integration/agent-provider/) does — has the timeout abort the fetch itself, body included. That means the signal stays live for as long as the response is being read, not just until the promise from `provider.send()` resolves: a generation that is still streaming past the sixty-second default is cut off mid-answer, not just a slow-starting one.
+
+The controller's own doc comment describes `sendTimeout` as bounding the time "until the `ReadableStream` is returned, NOT until first chunk." That description is only accurate for a provider that does not forward the signal past its own initial request. Once a provider hands the signal to `fetch`, as the example on the agent provider page does, the bound covers the entire exchange.
+
+## The host argument
+
+The constructor's first argument is a Lit [`ReactiveControllerHost`](https://lit.dev/docs/composition/controllers/). Inside a `LitElement`, that host is the element itself:
+
+```ts
+class MyChat extends LitElement {
+  private agent = new AgentController(this, provider);
+}
+```
+
+<Aside type="caution">
+Outside a Lit component — for example, wiring the controller into a plain-HTML page with no host element — you must supply a minimal object implementing the same interface. `AgentController` only calls `addController`, `removeController`, and `requestUpdate` on it; it never awaits `updateComplete`, but the type requires the property, so it needs a value:
+
+```js
+const host = {
+  addController() {},
+  removeController() {},
+  requestUpdate() {},
+  updateComplete: Promise.resolve(true),
+};
+
+const agent = new AgentController(host, provider);
+```
+
+This object does nothing beyond satisfying the interface — no reactive update is scheduled by `requestUpdate()`. If nothing you write reads `agent.state`, `agent.messages`, or the other getters after a `requestUpdate()` call, you will not see new data. Call the controller's getters yourself, or attach `onStateChange` / `onMessagesChange` / `onResponseChunk` callbacks in the options argument to know when to re-read them.
+</Aside>
+
+## Where this fits
+
+The agent controller is the only consumer of the [agent provider](/docs/integration/agent-provider/) interface. See the [integration overview](/docs/integration/) for how the provider, the controller, and Loquix components divide the work.
