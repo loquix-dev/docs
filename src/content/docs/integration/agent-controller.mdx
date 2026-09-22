@@ -28,7 +28,7 @@ The controller's `state` is one of:
 | `streaming` | The response stream is being read and its chunks are accumulating. |
 | `paused` | Streaming was suspended with `pause()`; chunks continue to arrive but are buffered rather than applied. |
 | `complete` | The response finished and was appended to `messages` as an assistant message. |
-| `error` | The provider's `send()` rejected after being called, or the stream errored, outside of an abort. What `currentResponseText` holds at that point depends on which of those happened — see "Partial responses" below. This is narrower than every way `send()` can reject: the `maxMessageLength`/`maxMessages` checks and the concurrent-send guard documented on `send()` above all reject too, but before the provider is ever called, and none of them change `state`. |
+| `error` | The provider's `send()` rejected after being called, the stream errored outside of an abort, or the send failed before it ever reached the provider — an unusable `sendTimeout` value does that, and `send()` does not reject in that case. What `currentResponseText` holds at that point depends on which — see "Partial responses" below. This is narrower than every way `send()` can reject: the `maxMessageLength` and `maxMessages` checks and the concurrent-send guard, all described under `send()` below, reject before the provider is ever called and leave `state` untouched. |
 
 ## Methods
 
@@ -53,7 +53,7 @@ Calling `send()` again while the controller is `sending`, `streaming`, or `pause
 | --- | --- | --- |
 | `state` | `AgentState` | The current state, one of the six values above. |
 | `messages` | `readonly AgentMessage[]` | The full conversation history, including the in-progress user message once `send()` has been called. |
-| `currentResponseText` | `string` | Text accumulated so far for the response currently streaming (or last streamed). Empty before the first chunk arrives. |
+| `currentResponseText` | `string` | Text accumulated so far for the response currently streaming, or the last one that streamed. It is cleared when the provider hands back a stream, not when `send()` is called, so between those two moments it still holds the previous response — see "Partial responses" below. |
 | `isStreaming` | `boolean` | `true` while `state` is `streaming` or `paused`. |
 
 ## Options

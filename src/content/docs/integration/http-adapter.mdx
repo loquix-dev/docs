@@ -94,7 +94,7 @@ Expects [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Se
 Expects one JSON object per line, separated by `\n`. The default parser picks the first of `text`, `content`, or `delta` (in that order) that is *neither `null` nor `undefined`* on the parsed object — `parsed.text ?? parsed.content ?? parsed.delta` — and emits it only if that one field is a string. Because `??` only skips `null`/`undefined`, not any other falsy value, a field can be present-but-`null` and still get skipped: `{"text": null, "content": "hi"}` emits `"hi"`, since `null` is passed over in favor of `content`. Once a field is selected this way, though, there is no further fallback if it turns out not to be a string. `{"text": 42, "content": "hi"}` emits nothing, because `text` was chosen (`42` is neither `null` nor `undefined`) and failed the string check — not `"hi"`. A line that parses as JSON but has none of the three fields set to anything other than `null`/`undefined` is skipped the same way: not an error, just no text to emit for that line.
 
 <Aside type="note">
-A body that never produces a single chunk for the configured transport is treated differently — see "A transport mismatch" under Errors below.
+A body whose lines are all valid JSON carrying none of those fields is fine: it yields nothing and closes cleanly. A body whose lines are not JSON at all is a different matter — see "A transport mismatch" under Errors below.
 </Aside>
 
 ### `text`
@@ -125,7 +125,7 @@ Both happen after `fetch` itself has already resolved. Anything that keeps `fetc
 - A network failure — DNS, connection refused, offline — rejects with a `TypeError`, `fetch`'s own error for that case.
 - A `signal` that aborts before the response arrives rejects with a `DOMException` named `AbortError`. See "Cancellation" below for the case where the abort instead happens mid-stream, after `fetch` has already resolved.
 
-A malformed *line inside* a body that did arrive is not one of these cases — see the caution above. Besides the cases above, `send()` **itself** also rejects, unwrapped, if a `url`, `headers`, or `body` function you supplied throws — `performRequest` calls all three before `fetch` ever runs, so that exception is entirely your own code's, not the adapter's. Otherwise, a missing body, a non-2xx status, or `fetch` itself failing or aborting before it resolves are what fail `send()`. A body that did arrive can still produce an error later, on the stream rather than from `send()` — see below.
+A malformed *line inside* a body that did arrive is not one of these cases — see the caution above. Besides the cases above, `send()` **itself** also rejects, unwrapped, if a `url`, `headers`, or `body` function you supplied throws — `performRequest` calls all three before `fetch` ever runs, so that exception is entirely your own code's, not the adapter's. Otherwise, a missing body, a non-2xx status, a body you built that `JSON.stringify` refuses, or `fetch` itself failing or aborting before it resolves are what fail `send()`. A body that did arrive can still produce an error later, on the stream rather than from `send()` — see below.
 
 ### A transport mismatch
 
