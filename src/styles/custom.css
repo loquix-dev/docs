@@ -52,14 +52,6 @@
 	--loquix-composer-container-border-color: #494252;
 	--loquix-input-bg: transparent;
 	--loquix-input-color: #f7f5ff;
-
-	/* @loquix/core 0.4.1 falls back to near-opaque white for these two, which
-	   no theme overrides, so source chips and footer actions in
-	   loquix-search-answer render light-on-light. */
-	--loquix-search-answer-source-bg: rgba(255, 255, 255, 0.06);
-	--loquix-search-answer-source-color: #c4bdd5;
-	--loquix-search-answer-action-bg: rgba(255, 255, 255, 0.06);
-	--loquix-search-answer-action-color: #c4bdd5;
 }
 
 body {

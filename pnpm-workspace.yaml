@@ -1,3 +1,6 @@
 allowBuilds:
   esbuild: true
   sharp: true
+# Our own package — never gate it behind the fresh-release delay.
+minimumReleaseAgeExclude:
+  - '@loquix/core'

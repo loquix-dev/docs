@@ -105,6 +105,7 @@ Set as properties, exactly as on the panel.
 | `activeSource` | `active-source` | `string` | `'all'` | Selected source filter. |
 | `runningTotal` | `running-total` | `number` | — | Result count shown in progress mode. |
 | `resultsLayout` | `results-layout` | `'blended' \| 'sectioned'` | `'blended'` | Layout for the built-in results. |
+| `emptyText` | `empty-text` | `string` | — | Message for the built-in results list when there is nothing to show. Setting it keeps the results region visible with an empty `results`, so the message is reachable. |
 
 ## Events
 
@@ -140,4 +141,6 @@ The embedded input's `loquix-change`, `loquix-search-submit`, and `loquix-search
 | `query` | Dialog search input area. |
 | `sources` | Source progress and filter area. |
 | `body` | Scrollable answer and results area. |
+| `answer` | Built-in or slotted answer region. |
+| `results` | Built-in results region, including its empty state. |
 | `footer` | Dialog footer area. |

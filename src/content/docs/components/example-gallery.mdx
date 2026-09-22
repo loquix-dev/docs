@@ -3,7 +3,6 @@ title: Example Gallery
 description: Categorized grid, list, or carousel of example prompts.
 ---
 
-import { Aside } from '@astrojs/starlight/components';
 import LivePreview from '../../../components/LivePreview.astro';
 
 <p class="component-kicker">Template component</p>
@@ -64,11 +63,7 @@ The shape matches [the template object](/docs/components/template-card/#the-temp
 | `list` | Stacked rows, better in a narrow panel. |
 | `carousel` | One horizontal scrolling row. |
 
-`columns` applies to the grid variant only.
-
-<Aside type="caution" title="In 0.4.1 the column count is not overridable in CSS">
-	The component writes `--loquix-gallery-columns` inline on the grid, which beats any rule you can write from outside. Setting it on the host, or in a stylesheet, has no effect — change the `columns` property instead, from a `matchMedia` listener if you need it to respond to viewport width.
-</Aside>
+`columns` applies to the grid variant only. Setting `--loquix-gallery-columns` from a stylesheet takes precedence over it, which is the practical way to drop to fewer columns in a media query.
 
 ## Properties
 
@@ -97,7 +92,7 @@ The shape matches [the template object](/docs/components/template-card/#the-temp
 | Variable | Purpose |
 | --- | --- |
 | `--loquix-gallery-gap` | Gap between items. |
-| `--loquix-gallery-columns` | Grid column count. See the caution above — in 0.4.1 this cannot be overridden from outside. |
+| `--loquix-gallery-columns` | Grid column count. Overrides the `columns` property. |
 | `--loquix-gallery-heading-font-size` | Heading font size. |
 | `--loquix-gallery-item-padding` | Item padding. |
 | `--loquix-gallery-item-border-color` | Item border color. |

@@ -81,9 +81,7 @@ panel.addEventListener('loquix-parameter-commit', (event) => {
 
 A preset is a named bundle of values. Selecting one applies its values and fires `loquix-preset-change`.
 
-<Aside type="caution" title="In 0.4.1 a preset replaces every value">
-	Selecting a preset overwrites the whole `values` map with the preset's own, so any parameter the preset does not name loses its current value and falls back to its default. Until this is fixed, give every preset a complete set of values — or reapply the missing ones in your `loquix-preset-change` handler.
-</Aside>
+A preset may name only the parameters it cares about — its values are merged over the current ones, so everything it leaves out keeps the value the user chose.
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |

@@ -110,6 +110,7 @@ Every collection is an array set as a property.
 | `activeSource` | `active-source` | `string` | `'all'` | Selected source filter. |
 | `runningTotal` | `running-total` | `number` | — | Result count shown in progress mode. |
 | `resultsLayout` | `results-layout` | `'blended' \| 'sectioned'` | `'blended'` | Layout for the built-in results. |
+| `emptyText` | `empty-text` | `string` | — | Message for the built-in results list when there is nothing to show. Setting it keeps the results region visible with an empty `results`, so the message is reachable. |
 
 ## Events
 
@@ -139,5 +140,7 @@ The embedded input's `loquix-change`, `loquix-search-submit`, and `loquix-search
 | `panel` | Expandable panel region. |
 | `sources` | Source progress and filter area. |
 | `body` | Answer and results area. |
+| `answer` | Built-in or slotted answer region. |
+| `results` | Built-in results region, including its empty state. |
 | `suggestions` | Suggestion area. |
 | `footer` | Footer area. |
