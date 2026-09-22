@@ -59,6 +59,7 @@ export default defineConfig({
 					label: 'Integration',
 					items: [
 						{ label: 'Overview', slug: 'integration' },
+						{ label: 'Agent provider', slug: 'integration/agent-provider' },
 					],
 				},
 				{
