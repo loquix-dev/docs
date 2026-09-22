@@ -2,12 +2,13 @@
 interface Props {
 	label?: string;
 	compact?: boolean;
+	tall?: boolean;
 }
 
-const { label = 'Preview', compact = false } = Astro.props;
+const { label = 'Preview', compact = false, tall = false } = Astro.props;
 ---
 
-<div class:list={['loquix-preview', { 'loquix-preview--compact': compact }]}>
+<div class:list={['loquix-preview', { 'loquix-preview--compact': compact, 'loquix-preview--tall': tall }]}>
 	<div class="loquix-preview__bar">
 		<span class="loquix-preview__label">{label}</span>
 		<span class="loquix-preview__status"><i></i> Live component</span>
@@ -45,6 +46,14 @@ const { label = 'Preview', compact = false } = Astro.props;
 	import '@loquix/core/define/define-model-selector';
 	import '@loquix/core/define/define-prompt-input';
 	import '@loquix/core/define/define-reasoning-block';
+	import '@loquix/core/define/define-search-answer';
+	import '@loquix/core/define/define-search-dialog';
+	import '@loquix/core/define/define-search-footer';
+	import '@loquix/core/define/define-search-input';
+	import '@loquix/core/define/define-search-panel';
+	import '@loquix/core/define/define-search-result';
+	import '@loquix/core/define/define-search-results';
+	import '@loquix/core/define/define-search-sources';
 	import '@loquix/core/define/define-source-list';
 	import '@loquix/core/define/define-tool-call';
 	import '@loquix/core/define/define-tool-call-list';

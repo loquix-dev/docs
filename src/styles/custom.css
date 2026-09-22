@@ -237,6 +237,11 @@ header.header {
 	min-height: 9rem;
 }
 
+.loquix-preview--tall .loquix-preview__canvas {
+	min-height: 34rem;
+	align-items: start;
+}
+
 .loquix-preview loquix-chat-composer,
 .loquix-preview loquix-chat-container,
 .loquix-preview loquix-chat-header,
@@ -303,7 +308,15 @@ header.header {
 
 .loquix-preview loquix-tool-call-list,
 .loquix-preview loquix-source-list,
-.loquix-preview loquix-caveat-notice {
+.loquix-preview loquix-caveat-notice,
+.loquix-preview loquix-search-input,
+.loquix-preview loquix-search-sources,
+.loquix-preview loquix-search-result,
+.loquix-preview loquix-search-results,
+.loquix-preview loquix-search-answer,
+.loquix-preview loquix-search-footer,
+.loquix-preview loquix-search-panel,
+.loquix-preview loquix-search-dialog {
 	width: min(100%, 40rem);
 	margin-inline: auto;
 }

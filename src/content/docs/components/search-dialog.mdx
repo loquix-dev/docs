@@ -1,0 +1,143 @@
+---
+title: Search Dialog
+description: Search trigger that opens a modal with AI answer, sources, and results.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Search component</p>
+
+`<loquix-search-dialog>` is the command-palette form of smart search. An inline trigger sits on the page; activating it opens a native modal holding a second input, the AI answer, the source strip, the results, and the shortcut footer.
+
+<div class="component-meta">
+	<span>loquix-search-dialog</span>
+	<span>native dialog element</span>
+	<span>trigger plus modal</span>
+</div>
+
+## Preview
+
+<LivePreview label="Page trigger" compact>
+	<loquix-search-dialog placeholder="Search the docs…" kbd="⌘K" heading="Search"></loquix-search-dialog>
+</LivePreview>
+
+Only the trigger shows here. Activate it to open the modal — closing it returns you to this page.
+
+## Usage
+
+```js
+import '@loquix/core/define/define-search-dialog';
+```
+
+```html
+<loquix-search-dialog placeholder="Search the docs…" kbd="⌘K"></loquix-search-dialog>
+```
+
+Wire your own shortcut to open it, then fill the data in the ask handler.
+
+```js
+const dialog = document.querySelector('loquix-search-dialog');
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'k' && (event.metaKey || event.ctrlKey)) {
+    event.preventDefault();
+    dialog.open = true;
+  }
+});
+
+dialog.addEventListener('loquix-search-ask', async (event) => {
+  dialog.state = 'searching';
+  dialog.answerState = 'generating';
+
+  const response = await ask(event.detail.query);
+
+  dialog.answerContent = response.answer;
+  dialog.answerSources = response.citations;
+  dialog.results = response.hits;
+  dialog.sources = response.backends;
+  dialog.state = 'idle';
+  dialog.answerState = 'complete';
+});
+```
+
+## Dialog or panel
+
+The data API is identical to [Search Panel](/docs/components/search-panel/); the difference is presentation. The dialog renders a native `<dialog>` as a modal, which brings focus trapping and the platform's own Escape handling. Reach for it when search is a global action invoked by a shortcut. Prefer the panel when search belongs to one region of a page and the surrounding content should stay readable.
+
+## Data properties
+
+Set as properties, exactly as on the panel.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `sources` | `SearchSource[]` | Back ends for the progress strip and filter chips. See [the search source object](/docs/components/search-sources/#the-search-source-object). |
+| `results` | `SearchResult[]` | Result rows. See [the search result object](/docs/components/search-result/#the-search-result-object). |
+| `answerSources` | `Source[]` | Sources cited by the answer. See [the source object](/docs/components/citation-popover/#the-source-object). |
+| `shortcuts` | `SearchShortcut[]` | Footer shortcuts. See [the shortcut object](/docs/components/search-footer/#the-shortcut-object). |
+
+<Aside type="caution" title="Two kinds of source, deliberately">
+	`sources` describes the back ends a query fanned out to. `answerSources` describes the documents the answer cites. They are different shapes and are not interchangeable.
+</Aside>
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `open` | `open` | `boolean` | `false` | Whether the modal is open. |
+| `value` | `value` | `string` | `''` | Current query, shared by both inputs. |
+| `mode` | `mode` | `'plain' \| 'smart' \| 'auto'` | `'auto'` | Routing mode for both inputs. |
+| `size` | `size` | `'md' \| 'lg'` | `'md'` | Size of the page-level trigger. |
+| `state` | `state` | `'idle' \| 'searching'` | `'idle'` | Lifecycle state for the dialog input and source strip. |
+| `placeholder` | `placeholder` | `string` | localized | Placeholder for both inputs. |
+| `kbd` | `kbd` | `string` | — | Keyboard hint in the trigger and footer. |
+| `heading` | `heading` | `string` | localized | Dialog heading. |
+| `askLabel` | `ask-label` | `string` | localized | Smart ask button label. |
+| `closeOnOutsideClick` | `close-on-outside-click` | `boolean` | `true` | Whether clicking the backdrop closes the dialog. |
+| `hideAnswer` | `hide-answer` | `boolean` | `false` | Hides the built-in answer region. |
+| `hideResults` | `hide-results` | `boolean` | `false` | Hides the built-in results region. |
+| `hideFooter` | `hide-footer` | `boolean` | `false` | Hides the built-in footer. |
+| `answerContent` | `answer-content` | `string` | `''` | Answer text. Ignored when the `answer` slot is used. |
+| `answerHeading` | `answer-heading` | `string` | localized | Answer heading override. |
+| `answerState` | `answer-state` | `'complete' \| 'generating'` | `'complete'` | Answer lifecycle state. |
+| `model` | `model` | `string` | — | Model label in the answer footer. |
+| `generatedIn` | `generated-in` | `string` | — | Timing label in the answer footer. |
+| `activeSource` | `active-source` | `string` | `'all'` | Selected source filter. |
+| `runningTotal` | `running-total` | `number` | — | Result count shown in progress mode. |
+| `resultsLayout` | `results-layout` | `'blended' \| 'sectioned'` | `'blended'` | Layout for the built-in results. |
+
+## Events
+
+| Event | Detail | Description |
+| --- | --- | --- |
+| `loquix-search-dialog-open` | `{ value }` | Fired when the modal opens. |
+| `loquix-search-dialog-close` | `{ value }` | Fired when the modal closes. |
+
+The embedded input's `loquix-change`, `loquix-search-submit`, and `loquix-search-ask` events bubble out of the dialog.
+
+<Aside type="caution" title="Closing in code is silent">
+	Setting `open = true` fires the open event, but setting `open = false` closes the modal without firing the close event. `loquix-search-dialog-close` reports user-driven closes — the close button, the backdrop, or Escape. If you also close it from code, do the bookkeeping there rather than relying on the event. [Search Panel](/docs/components/search-panel/) fires both directions either way.
+</Aside>
+
+## Slots
+
+| Slot | Purpose |
+| --- | --- |
+| `trigger-prefix` | Prefix content for the page-level trigger. |
+| `dialog-prefix` | Prefix content for the input inside the modal. |
+| `answer` | Custom answer content replacing the built-in answer block. |
+| `footer-actions` | Trailing footer actions. |
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `trigger` | The inline trigger input. |
+| `dialog` | The native `<dialog>` element. |
+| `header` | Dialog header row. |
+| `heading` | Dialog heading text. |
+| `close-button` | Dialog close button. |
+| `query` | Dialog search input area. |
+| `sources` | Source progress and filter area. |
+| `body` | Scrollable answer and results area. |
+| `footer` | Dialog footer area. |

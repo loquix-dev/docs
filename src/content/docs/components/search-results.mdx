@@ -1,0 +1,72 @@
+---
+title: Search Results
+description: Result list container with blended and source-sectioned layouts.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Search component</p>
+
+`<loquix-search-results>` takes the array of results and renders the rows. Two layouts: one ranked list across all sources, or grouped under a heading per source.
+
+<div class="component-meta">
+	<span>loquix-search-results</span>
+	<span>blended or sectioned</span>
+	<span>built-in empty state</span>
+</div>
+
+## Preview
+
+<LivePreview label="Sectioned by source">
+	<loquix-search-results layout="sectioned" data-props='{"results":[{"rank":1,"title":"Refund policy","url":"https://example.com/policies/refunds","displayUrl":"example.com › policies","snippet":"Customers may request a full refund within 30 days of delivery.","source":{"id":"docs","name":"Docs","icon":"📘"}},{"rank":2,"title":"Returns and exchanges","url":"https://example.com/policies/returns","snippet":"Items must be unopened and in original packaging.","source":{"id":"docs","name":"Docs","icon":"📘"}},{"rank":3,"title":"Refund request from Acme","url":"https://example.com/tickets/8812","snippet":"Customer asked about the 30-day window on an opened item.","source":{"id":"tickets","name":"Tickets","icon":"🎫"}}]}'></loquix-search-results>
+</LivePreview>
+
+## Usage
+
+```js
+import '@loquix/core/define/define-search-results';
+import '@loquix/core/define/define-search-result';
+```
+
+```js
+const results = document.querySelector('loquix-search-results');
+
+results.results = response.hits;
+```
+
+Rows are rendered from the array, so the click event bubbles from the individual [Search Result](/docs/components/search-result/) rows.
+
+```js
+results.addEventListener('loquix-search-result-click', (event) => {
+  event.preventDefault();
+  openInSidePanel(event.detail.result);
+});
+```
+
+## Layouts
+
+| Layout | Use it for |
+| --- | --- |
+| `blended` | One ranked list across every source. Best when relevance matters more than provenance. |
+| `sectioned` | Grouped under a header per source. Best when the user thinks in terms of where something lives. |
+
+An empty array renders the empty state; `emptyText` replaces its wording.
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `results` | — | `SearchResult[]` | `[]` | The results to render. Property-only. See [the search result object](/docs/components/search-result/#the-search-result-object). |
+| `layout` | `layout` | `'blended' \| 'sectioned'` | `'blended'` | Layout variant. |
+| `emptyText` | `empty-text` | `string` | localized | Empty-state text. |
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `container` | Outer wrapper. |
+| `empty` | Empty-state text. |
+| `section` | A grouped source section. |
+| `section-header` | A source section header. |
+| `section-items` | Result rows inside a section. |

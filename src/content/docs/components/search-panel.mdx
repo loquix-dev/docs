@@ -1,0 +1,143 @@
+---
+title: Search Panel
+description: Inline search input that expands into an anchored answer and results overlay.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Search component</p>
+
+`<loquix-search-panel>` is a whole smart search surface in one element. It renders an inline input that expands downward into an anchored overlay holding the AI answer, the source strip, the results, and the shortcut footer — no modal, and the page stays visible behind it.
+
+<div class="component-meta">
+	<span>loquix-search-panel</span>
+	<span>anchored overlay</span>
+	<span>composes five components</span>
+</div>
+
+## Preview
+
+<LivePreview label="Expanded panel" tall>
+	<loquix-search-panel
+		open
+		value="how do refunds work"
+		heading="Search results"
+		model="Loquix"
+		generated-in="1.8s"
+		running-total="3"
+		answer-content="Refunds are available within 30 days of delivery, and the item must be unopened to qualify."
+		kbd="⌘K"
+		data-props='{"sources":[{"id":"docs","name":"Docs","icon":"📘","status":"done","count":2},{"id":"tickets","name":"Tickets","icon":"🎫","status":"done","count":1}],"results":[{"rank":1,"title":"Refund policy","url":"https://example.com/policies/refunds","displayUrl":"example.com › policies","snippet":"Customers may request a full refund within 30 days of delivery.","source":{"id":"docs","name":"Docs","icon":"📘"}},{"rank":2,"title":"Returns and exchanges","url":"https://example.com/policies/returns","snippet":"Items must be unopened and in original packaging.","source":{"id":"docs","name":"Docs","icon":"📘"}}],"answerSources":[{"title":"Refund policy","url":"https://example.com/policies/refunds","host":"example.com"}],"shortcuts":[{"key":"Enter","label":"Search"},{"key":"Esc","label":"Close"}]}'
+	></loquix-search-panel>
+</LivePreview>
+
+## Usage
+
+```js
+import '@loquix/core/define/define-search-panel';
+```
+
+```html
+<loquix-search-panel placeholder="Search the docs…" kbd="⌘K"></loquix-search-panel>
+```
+
+The panel owns its open state and the layout; you supply the data and react to the submit events, which come from the embedded [Search Input](/docs/components/search-input/).
+
+```js
+const panel = document.querySelector('loquix-search-panel');
+
+panel.addEventListener('loquix-search-ask', async (event) => {
+  panel.state = 'searching';
+  panel.answerState = 'generating';
+
+  const response = await ask(event.detail.query);
+
+  panel.answerContent = response.answer;
+  panel.answerSources = response.citations;
+  panel.results = response.hits;
+  panel.sources = response.backends;
+  panel.runningTotal = response.hits.length;
+  panel.state = 'idle';
+  panel.answerState = 'complete';
+});
+```
+
+## Panel or dialog
+
+[Search Dialog](/docs/components/search-dialog/) has the same data API but opens a modal `<dialog>` over the page. Use the panel when search sits inside a page layout and the surrounding content should stay visible; use the dialog for a command-palette experience reached by a shortcut from anywhere.
+
+The `detached` variant floats the overlay below the input; `integrated` draws one continuous surface around the input and the panel.
+
+## Data properties
+
+Every collection is an array set as a property.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `sources` | `SearchSource[]` | Back ends for the progress strip and filter chips. See [the search source object](/docs/components/search-sources/#the-search-source-object). |
+| `results` | `SearchResult[]` | Result rows. See [the search result object](/docs/components/search-result/#the-search-result-object). |
+| `answerSources` | `Source[]` | Sources cited by the AI answer. See [the source object](/docs/components/citation-popover/#the-source-object). |
+| `shortcuts` | `SearchShortcut[]` | Footer shortcuts. See [the shortcut object](/docs/components/search-footer/#the-shortcut-object). |
+
+<Aside type="caution" title="Two kinds of source, deliberately">
+	`sources` describes the back ends a query fanned out to. `answerSources` describes the documents the answer cites. They are different shapes and are not interchangeable.
+</Aside>
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `open` | `open` | `boolean` | `false` | Whether the panel is expanded. |
+| `value` | `value` | `string` | `''` | Current query. |
+| `mode` | `mode` | `'plain' \| 'smart' \| 'auto'` | `'auto'` | Routing mode for the input. |
+| `size` | `size` | `'md' \| 'lg'` | `'md'` | Size of the inline input. |
+| `variant` | `variant` | `'detached' \| 'integrated'` | `'detached'` | Whether the overlay floats below the input or wraps around it. |
+| `state` | `state` | `'idle' \| 'searching'` | `'idle'` | Lifecycle state for the input and source strip. |
+| `placeholder` | `placeholder` | `string` | localized | Input placeholder. |
+| `kbd` | `kbd` | `string` | — | Keyboard hint in the input. |
+| `heading` | `heading` | `string` | localized | Accessible label for the expanded region. |
+| `askLabel` | `ask-label` | `string` | localized | Smart ask button label. |
+| `closeOnOutsideClick` | `close-on-outside-click` | `boolean` | `true` | Whether clicking outside closes the panel. |
+| `hideAnswer` | `hide-answer` | `boolean` | `false` | Hides the built-in answer region. |
+| `hideResults` | `hide-results` | `boolean` | `false` | Hides the built-in results region. |
+| `hideFooter` | `hide-footer` | `boolean` | `false` | Hides the built-in footer. |
+| `answerContent` | `answer-content` | `string` | `''` | Answer text. Ignored when the `answer` slot is used. |
+| `answerHeading` | `answer-heading` | `string` | localized | Answer heading override. |
+| `answerState` | `answer-state` | `'complete' \| 'generating'` | `'complete'` | Answer lifecycle state. |
+| `model` | `model` | `string` | — | Model label in the answer footer. |
+| `generatedIn` | `generated-in` | `string` | — | Timing label in the answer footer. |
+| `activeSource` | `active-source` | `string` | `'all'` | Selected source filter. |
+| `runningTotal` | `running-total` | `number` | — | Result count shown in progress mode. |
+| `resultsLayout` | `results-layout` | `'blended' \| 'sectioned'` | `'blended'` | Layout for the built-in results. |
+
+## Events
+
+| Event | Detail | Description |
+| --- | --- | --- |
+| `loquix-search-panel-open` | `{ value }` | Fired when the panel expands. |
+| `loquix-search-panel-close` | `{ value }` | Fired when the panel collapses. |
+
+The embedded input's `loquix-change`, `loquix-search-submit`, and `loquix-search-ask` events bubble out of the panel, so you listen for them here.
+
+## Slots
+
+| Slot | Purpose |
+| --- | --- |
+| `prefix` | Prefix content for the inline input. |
+| `suggestions` | Pre-search suggestions, commonly [Suggestion Chips](/docs/components/suggestion-chips/). |
+| `answer` | Custom answer content replacing the built-in answer block. |
+| `footer-actions` | Trailing footer actions. |
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `container` | Outer anchored surface. |
+| `query` | Search input area. |
+| `input` | The inline search input. |
+| `panel` | Expandable panel region. |
+| `sources` | Source progress and filter area. |
+| `body` | Answer and results area. |
+| `suggestions` | Suggestion area. |
+| `footer` | Footer area. |

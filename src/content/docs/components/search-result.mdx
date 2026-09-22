@@ -1,0 +1,106 @@
+---
+title: Search Result
+description: One search result row, with rank, source, title, URL, snippet, and citation reference.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Search component</p>
+
+`<loquix-search-result>` renders a single result row. Pass the whole thing as a `result` object, or fill the individual attributes when you only have loose values on hand.
+
+<div class="component-meta">
+	<span>loquix-search-result</span>
+	<span>object or attributes</span>
+	<span>cancelable clicks</span>
+</div>
+
+## Preview
+
+<LivePreview label="Result rows">
+	<div class="stack-preview">
+		<loquix-search-result data-props='{"result":{"rank":1,"title":"Refund policy","url":"https://example.com/policies/refunds","displayUrl":"example.com › policies","snippet":"Customers may request a full refund within 30 days of delivery.","meta":"updated yesterday","citationRef":1,"source":{"id":"docs","name":"Docs","icon":"📘"}}}'></loquix-search-result>
+		<loquix-search-result data-props='{"result":{"rank":2,"title":"Returns and exchanges","url":"https://example.com/policies/returns","displayUrl":"example.com › policies","snippet":"Items must be unopened and in original packaging to qualify.","source":{"id":"docs","name":"Docs","icon":"📘"}}}'></loquix-search-result>
+		<loquix-search-result rank="3" title="Shipping FAQ" source-name="Support" source-icon="🎫" snippet="Standard delivery takes three to five business days." disabled></loquix-search-result>
+	</div>
+</LivePreview>
+
+The first two rows come from `result` objects; the third uses plain attributes and is disabled.
+
+## Usage
+
+```js
+import '@loquix/core/define/define-search-result';
+```
+
+```js
+const row = document.querySelector('loquix-search-result');
+
+row.result = {
+  rank: 1,
+  title: 'Refund policy',
+  url: 'https://example.com/policies/refunds',
+  snippet: 'Customers may request a full refund within 30 days of delivery.',
+  source: { id: 'docs', name: 'Docs', icon: '📘' },
+};
+
+row.addEventListener('loquix-search-result-click', (event) => {
+  event.preventDefault();
+  openInSidePanel(event.detail.result);
+});
+```
+
+The click event is cancelable, so `preventDefault()` keeps the user on the page.
+
+## The search result object
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `title` | `string` | yes | Result title. |
+| `url` | `string` | no | Destination. Only `http(s)` URLs render as anchors. |
+| `displayUrl` | `string` | no | Short path shown in the metadata row. |
+| `snippet` | `string` | no | Excerpt or match snippet. |
+| `meta` | `string` | no | Extra metadata, such as `updated yesterday`. |
+| `rank` | `number \| null` | no | One-based rank. Omit to number by position; pass `null` to leave the row unnumbered. |
+| `source` | `SearchSource` | no | Where the result came from. See [the search source object](/docs/components/search-sources/#the-search-source-object). |
+| `citationRef` | `number` | no | Citation number this result supports in an AI answer. |
+| `id` | `string` | no | Stable identifier. |
+
+<Aside type="note" title="Attributes are a fallback, not a merge">
+	`sourceName`, `title`, `url`, and the rest exist for cases where you have no result object. When `result` is set, it supplies the row.
+</Aside>
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `result` | — | `SearchResult` | — | The full result. Property-only. |
+| `rank` | `rank` | `number` | — | One-based rank override. |
+| `title` | `title` | `string` | `''` | Title fallback. |
+| `url` | `url` | `string` | — | URL fallback. |
+| `displayUrl` | `display-url` | `string` | — | Display URL fallback. |
+| `snippet` | `snippet` | `string` | — | Snippet fallback. |
+| `meta` | `meta` | `string` | — | Metadata fallback. |
+| `sourceName` | `source-name` | `string` | — | Source name fallback. |
+| `sourceIcon` | `source-icon` | `string` | — | Source icon fallback. |
+| `citationRef` | `citation-ref` | `number` | — | Citation reference fallback. |
+| `disabled` | `disabled` | `boolean` | `false` | Disables the row. |
+
+## Events
+
+| Event | Detail | Description |
+| --- | --- | --- |
+| `loquix-search-result-click` | `{ result, index }` | Cancelable. Fired before navigation. |
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `row` | The clickable row. |
+| `rank` | Rank column. |
+| `source` | Source label. |
+| `title` | Result title. |
+| `snippet` | Result snippet. |
+
+Use [Search Results](/docs/components/search-results/) to render a whole list rather than wiring rows one at a time.

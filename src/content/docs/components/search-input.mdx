@@ -1,0 +1,111 @@
+---
+title: Search Input
+description: Single-line search field that routes a query to plain search or to an AI answer.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Search component</p>
+
+`<loquix-search-input>` is the entry point of a smart search surface. One field covers two destinations: a plain keyword search, and a question routed to the model. Which one a submit triggers depends on `mode`, and each fires its own event.
+
+<div class="component-meta">
+	<span>loquix-search-input</span>
+	<span>three routing modes</span>
+	<span>separate submit events</span>
+</div>
+
+## Preview
+
+<LivePreview label="Routing modes">
+	<div class="stack-preview">
+		<loquix-search-input placeholder="Search the docs…" kbd="⌘K"></loquix-search-input>
+		<loquix-search-input mode="smart" value="how do refunds work" ask-label="Ask AI" show-ask-affordance></loquix-search-input>
+		<loquix-search-input mode="plain" value="refund policy" size="lg"></loquix-search-input>
+	</div>
+</LivePreview>
+
+Top to bottom: an idle field with a shortcut hint, smart mode showing the Ask affordance, and a large plain-mode field with a clear button.
+
+## Usage
+
+```js
+import '@loquix/core/define/define-search-input';
+```
+
+```html
+<loquix-search-input placeholder="Search the docs…" kbd="⌘K"></loquix-search-input>
+```
+
+The two submit paths are separate events, so you never have to inspect the mode to know what the user meant.
+
+```js
+const input = document.querySelector('loquix-search-input');
+
+input.addEventListener('loquix-search-submit', (event) => {
+  runKeywordSearch(event.detail.query);
+});
+
+input.addEventListener('loquix-search-ask', (event) => {
+  askTheModel(event.detail.query);
+});
+
+input.addEventListener('loquix-change', (event) => {
+  updateSuggestions(event.detail.value);
+});
+```
+
+## Modes
+
+| Mode | Behavior |
+| --- | --- |
+| `auto` | The default. Routes on what the user typed — a question goes to the model, keywords go to search. |
+| `plain` | Keyword search only. The Ask affordance never appears, even with `showAskAffordance` set. |
+| `smart` | Always routes to the model. |
+
+Set `showAskAffordance` to keep the Ask button visible regardless of what has been typed. It has no effect in `plain` mode.
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `value` | `value` | `string` | `''` | Current query. |
+| `mode` | `mode` | `'plain' \| 'smart' \| 'auto'` | `'auto'` | Routing mode. |
+| `size` | `size` | `'md' \| 'lg'` | `'md'` | Size preset. |
+| `state` | `state` | `'idle' \| 'searching'` | `'idle'` | Lifecycle state. Set `searching` while a request is in flight. |
+| `placeholder` | `placeholder` | `string` | localized | Placeholder text. |
+| `kbd` | `kbd` | `string` | — | Keyboard hint rendered at the end of the field, such as `⌘K`. |
+| `hideKbdWhenAsk` | `hide-kbd-when-ask` | `boolean` | `true` | Hides the keyboard hint while the Ask affordance is visible, so the two do not crowd each other. |
+| `clearable` | `clearable` | `boolean` | `true` | Shows a clear button once the field has a value. |
+| `askLabel` | `ask-label` | `string` | localized | Label for the Ask button. |
+| `showAskAffordance` | `show-ask-affordance` | `boolean` | `false` | Forces the Ask button to stay visible. Ignored in `plain` mode. |
+| `disabled` | `disabled` | `boolean` | `false` | Disables the field. |
+
+## Events
+
+| Event | Detail | Description |
+| --- | --- | --- |
+| `loquix-change` | `{ value }` | Fired as the value changes. |
+| `loquix-search-submit` | `{ query, mode: 'plain' }` | Fired on a plain search submit. |
+| `loquix-search-ask` | `{ query, mode: 'smart' }` | Fired on an AI submit. |
+
+## Slots
+
+| Slot | Purpose |
+| --- | --- |
+| `prefix` | Replaces the leading search icon. |
+| `sparkle` | Replaces the smart-mode sparkle icon. |
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `container` | Outer input shell. |
+| `prefix` | Prefix icon container. |
+| `input` | The native `<input>`. |
+| `clear-button` | Clear query button. |
+| `ask-button` | The smart search affordance. |
+| `kbd` | Keyboard hint. |
+
+For a complete surface rather than the field alone, see [Search Panel](/docs/components/search-panel/) and [Search Dialog](/docs/components/search-dialog/), which embed this input.

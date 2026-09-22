@@ -1,0 +1,125 @@
+---
+title: Search Answer
+description: AI answer block for search surfaces, with cited sources and footer actions.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Search component</p>
+
+`<loquix-search-answer>` is the generated answer that sits above the result rows. It carries the answer body, the sources it cites, and a footer with the model name, timing, and copy and regenerate actions.
+
+<div class="component-meta">
+	<span>loquix-search-answer</span>
+	<span>streaming state</span>
+	<span>built-in actions</span>
+</div>
+
+## Preview
+
+<LivePreview label="Completed answer">
+	<loquix-search-answer
+		content="Refunds are available within 30 days of delivery, and the item must be unopened to qualify."
+		model="Loquix"
+		generated-in="1.8s"
+		data-props='{"sources":[{"title":"Refund policy","url":"https://example.com/policies/refunds","host":"example.com"},{"title":"Returns and exchanges","url":"https://example.com/policies/returns","host":"example.com"}]}'
+	></loquix-search-answer>
+</LivePreview>
+
+## Usage
+
+```js
+import '@loquix/core/define/define-search-answer';
+```
+
+```html
+<loquix-search-answer
+  content="Refunds are available within 30 days of delivery."
+  model="Loquix"
+  generated-in="1.8s"
+></loquix-search-answer>
+```
+
+```js
+const answer = document.querySelector('loquix-search-answer');
+
+answer.state = 'generating';
+answer.content = '';
+
+for await (const chunk of stream) {
+  answer.content += chunk;
+}
+
+answer.state = 'complete';
+answer.sources = response.citations;
+
+answer.addEventListener('loquix-copy', (event) => {
+  navigator.clipboard.writeText(event.detail.content);
+});
+
+answer.addEventListener('loquix-regenerate', () => {
+  askAgain();
+});
+```
+
+## Inline citations
+
+`content` is plain text. When you need numbered chips inside the prose, put the body in the default slot instead and place [Citation Popover](/docs/components/citation-popover/) elements yourself.
+
+```html
+<loquix-search-answer model="Loquix">
+  Refunds are available within 30 days
+  <loquix-citation-popover index="1"></loquix-citation-popover>
+  of delivery.
+</loquix-search-answer>
+```
+
+<Aside type="note" title="The slot wins">
+	When the default slot has content, `content` is ignored entirely rather than merged.
+</Aside>
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `content` | `content` | `string` | `''` | Plain-text answer body. Ignored when the default slot has content. |
+| `sources` | — | `Source[]` | `[]` | Cited sources shown as chips. Property-only. See [the source object](/docs/components/citation-popover/#the-source-object). |
+| `state` | `state` | `'complete' \| 'generating'` | `'complete'` | Lifecycle state. `generating` shows the in-progress indicator. |
+| `heading` | `heading` | `string` | localized | Heading override. |
+| `model` | `model` | `string` | — | Model name shown in the footer. |
+| `generatedIn` | `generated-in` | `string` | — | Timing label, such as `1.8s`. |
+| `showCopy` | `show-copy` | `boolean` | `true` | Whether the built-in Copy action is rendered. |
+| `showRegenerate` | `show-regenerate` | `boolean` | `true` | Whether the built-in Regenerate action is rendered. |
+| `sourcesLabel` | `sources-label` | `string` | localized | Accessible label override for the cited sources. |
+
+## Events
+
+| Event | Detail | Description |
+| --- | --- | --- |
+| `loquix-copy` | `{ content }` | Fired by the built-in Copy action. Writing to the clipboard is yours to do. |
+| `loquix-regenerate` | — | Fired by the built-in Regenerate action. |
+
+## Slots
+
+| Slot | Purpose |
+| --- | --- |
+| default | Answer body, for inline citation chips or richer markup. |
+| `actions` | Extra footer actions beside the built-in ones. |
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `container` | Outer answer block. |
+| `header` | Header row. |
+| `icon` | AI icon. |
+| `title` | Header title. |
+| `body` | Answer content area. |
+| `generating` | In-progress indicator. |
+| `footer` | Footer row. |
+| `meta` | Generated-by metadata. |
+| `sources` | Cited source chips container. |
+| `source` | A single cited source chip. |
+| `actions` | Built-in and slotted actions group. |
+| `action` | A built-in action button. |

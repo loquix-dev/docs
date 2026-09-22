@@ -1,0 +1,108 @@
+---
+title: Search Sources
+description: Fan-out progress strip and source filter chips for smart search.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Search component</p>
+
+`<loquix-search-sources>` covers the two things a user needs to know when a query fans out across several back ends: which sources are still working, and which one they are looking at now. One variant shows progress, the other shows filter chips.
+
+<div class="component-meta">
+	<span>loquix-search-sources</span>
+	<span>progress and filters</span>
+	<span>per-source status</span>
+</div>
+
+## Preview
+
+<LivePreview label="Progress then filters">
+	<div class="stack-preview">
+		<loquix-search-sources variant="progress" running-total="24" data-props='{"sources":[{"id":"docs","name":"Docs","icon":"📘","status":"done","count":12,"duration":"240ms"},{"id":"slack","name":"Slack","icon":"💬","status":"running"},{"id":"tickets","name":"Tickets","icon":"🎫","status":"error"}]}'></loquix-search-sources>
+		<loquix-search-sources variant="filters" active-source="docs" data-props='{"sources":[{"id":"docs","name":"Docs","icon":"📘","count":12},{"id":"slack","name":"Slack","icon":"💬","count":8},{"id":"tickets","name":"Tickets","icon":"🎫","count":4}]}'></loquix-search-sources>
+	</div>
+</LivePreview>
+
+The progress strip shows one source finished, one still running, and one failed. Below it, the filter chips with Docs selected.
+
+## Usage
+
+```js
+import '@loquix/core/define/define-search-sources';
+```
+
+`sources` is an array, so assign it as a property.
+
+```js
+const strip = document.querySelector('loquix-search-sources');
+
+strip.sources = [
+  { id: 'docs', name: 'Docs', icon: '📘', status: 'running' },
+  { id: 'slack', name: 'Slack', icon: '💬', status: 'idle' },
+];
+
+strip.addEventListener('loquix-search-source-select', (event) => {
+  filterResults(event.detail.sourceId);
+});
+```
+
+Update `status` and `count` per source as each back end answers, and the strip reflects it without a re-render on your side.
+
+## The search source object
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | `string` | yes | Stable identifier, such as `docs` or `slack`. |
+| `name` | `string` | yes | Display name. |
+| `icon` | `string` | no | Small icon, emoji, or letter shown before the name. |
+| `status` | `'idle' \| 'running' \| 'done' \| 'error'` | no | Per-source state during fan-out. |
+| `count` | `number` | no | Number of results this source returned. |
+| `duration` | `string` | no | Timing label, such as `240ms`. |
+
+## Variants
+
+| Variant | Use it for |
+| --- | --- |
+| `progress` | While the query is running. Shows a spinner, a running total, and each source's status. |
+| `filters` | After results arrive. Shows selectable chips with per-source counts. |
+
+In `filters` mode, `activeSource` holds the selected chip; `all` means the All chip. Set `showAll` to `false` to drop that chip.
+
+The All chip shows the sum of the per-source counts.
+
+<Aside type="note" title="The chip updates, the results do not">
+	Choosing a chip moves `activeSource` for you, so the selected state is handled. Filtering the result list is not — do that in the `loquix-search-source-select` handler.
+</Aside>
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `sources` | — | `SearchSource[]` | `[]` | The sources to render. Property-only. |
+| `variant` | `variant` | `'progress' \| 'filters'` | `'progress'` | Display mode. |
+| `activeSource` | `active-source` | `string` | `'all'` | Selected chip id in `filters` mode. Updated by the component when a chip is chosen. |
+| `headline` | `headline` | `string` | localized | Headline override in `progress` mode. |
+| `runningTotal` | `running-total` | `number` | — | Running result total in `progress` mode. |
+| `showAll` | `show-all` | `boolean` | `true` | Whether to render the All chip in `filters` mode. |
+| `label` | `label` | `string` | localized | Accessible label override. |
+
+## Events
+
+| Event | Detail | Description |
+| --- | --- | --- |
+| `loquix-search-source-select` | `{ sourceId, source }` | Fired when a filter chip is selected. |
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `container` | Outer wrapper. |
+| `header` | Progress header row. |
+| `spinner` | Overall progress spinner. |
+| `count` | Running total, or a source's result count. |
+| `list` | Pill list. |
+| `pill` | A single source pill or filter chip. |
+| `icon` | Source icon. |
+| `name` | Source name. |

@@ -7,7 +7,7 @@ sidebar:
 
 import { Aside, Card, CardGrid } from '@astrojs/starlight/components';
 
-This documentation targets `@loquix/core` **0.4.1**. Reference pages cover the chat, message, action, reasoning and trust, attachment, onboarding, and configuration components, and the remaining families are being added family by family.
+This documentation targets `@loquix/core` **0.4.1**. Reference pages cover the chat, message, action, reasoning and trust, search, attachment, onboarding, and configuration components, and the remaining families are being added family by family.
 
 ## Start with these
 
@@ -70,6 +70,19 @@ This documentation targets `@loquix/core` **0.4.1**. Reference pages cover the c
 | [Caveat Notice](/docs/components/caveat-notice/) | Standing reminder about the assistant's limits. |
 | [Disagreement Marker](/docs/components/disagreement-marker/) | Recording that a user disputed an answer. |
 
+### Search
+
+| Component | Use it for |
+| --- | --- |
+| [Search Input](/docs/components/search-input/) | One field routing to keyword search or an AI answer. |
+| [Search Sources](/docs/components/search-sources/) | Fan-out progress and per-source filter chips. |
+| [Search Result](/docs/components/search-result/) | A single result row. |
+| [Search Results](/docs/components/search-results/) | Blended or source-sectioned result lists. |
+| [Search Answer](/docs/components/search-answer/) | The generated answer with citations and actions. |
+| [Search Footer](/docs/components/search-footer/) | Keyboard shortcut hints. |
+| [Search Panel](/docs/components/search-panel/) | Complete search surface as an anchored overlay. |
+| [Search Dialog](/docs/components/search-dialog/) | Complete search surface as a modal palette. |
+
 ### Attachments
 
 | Component | Use it for |
@@ -98,7 +111,6 @@ This documentation targets `@loquix/core` **0.4.1**. Reference pages cover the c
 
 - **Attachments:** Attachment Panel
 - **Feedback:** Feedback Form, Correction Input
-- **Search:** Search Input, Search Sources, Search Result, Search Results, Search Answer, Search Footer, Search Dialog, Search Panel
 - **Configuration:** Dropdown Select, Parameter Panel, Filter Bar
 - **Templates and guidance:** Template Card, Template Picker, Example Gallery, Nudge Banner
 - **Infrastructure:** Scroll Anchor

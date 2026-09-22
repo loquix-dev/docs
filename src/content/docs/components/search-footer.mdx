@@ -1,0 +1,73 @@
+---
+title: Search Footer
+description: Keyboard shortcut row for search panels and command palettes.
+---
+
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Search component</p>
+
+`<loquix-search-footer>` is the strip of keyboard hints along the bottom of a search surface — the row that teaches Enter, arrow keys, and Escape without a tooltip.
+
+<div class="component-meta">
+	<span>loquix-search-footer</span>
+	<span>shortcut list</span>
+	<span>trailing actions slot</span>
+</div>
+
+## Preview
+
+<LivePreview label="Shortcut row" compact>
+	<loquix-search-footer data-props='{"shortcuts":[{"key":"Enter","label":"Search"},{"key":"Cmd Enter","label":"Ask AI"},{"key":"↑ ↓","label":"Navigate"},{"key":"Esc","label":"Close"}]}'></loquix-search-footer>
+</LivePreview>
+
+## Usage
+
+```js
+import '@loquix/core/define/define-search-footer';
+```
+
+```js
+const footer = document.querySelector('loquix-search-footer');
+
+footer.shortcuts = [
+  { key: 'Enter', label: 'Search' },
+  { key: 'Cmd Enter', label: 'Ask AI' },
+  { key: 'Esc', label: 'Close' },
+];
+```
+
+The component renders the hints. Binding the actual keys stays in your code, so the labels never drift out of sync on their own — keep the two together when you change a binding.
+
+## The shortcut object
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `key` | `string` | yes | Key or chord, such as `Enter` or `Cmd Enter`. |
+| `label` | `string` | yes | What the key does, such as `Search`. |
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `shortcuts` | — | `SearchShortcut[]` | `[]` | The shortcuts to display. Property-only. |
+| `label` | `label` | `string` | localized | Accessible label override. |
+
+## Slots
+
+| Slot | Purpose |
+| --- | --- |
+| `actions` | Trailing controls or status text, aligned to the end of the row. |
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `footer` | Outer container. |
+| `shortcuts` | The shortcut list. |
+| `shortcut` | A single shortcut item. |
+| `key` | Key or chord. |
+| `label` | Action label. |
+| `actions` | Container for the slotted trailing actions. |
+
+Both [Search Dialog](/docs/components/search-dialog/) and [Search Panel](/docs/components/search-panel/) embed this footer, so you usually set `shortcuts` on those instead of using it directly.
