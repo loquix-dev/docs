@@ -28,7 +28,7 @@ The controller's `state` is one of:
 | `streaming` | The response stream is being read and its chunks are accumulating. |
 | `paused` | Streaming was suspended with `pause()`; chunks continue to arrive but are buffered rather than applied. |
 | `complete` | The response finished and was appended to `messages` as an assistant message. |
-| `error` | `send()` rejected, or the stream errored, outside of an abort. What `currentResponseText` holds at that point depends on which of those two happened — see "Partial responses" below. |
+| `error` | The provider's `send()` rejected after being called, or the stream errored, outside of an abort. What `currentResponseText` holds at that point depends on which of those happened — see "Partial responses" below. This is narrower than every way `send()` can reject: the `maxMessageLength`/`maxMessages` checks and the concurrent-send guard documented on `send()` above all reject too, but before the provider is ever called, and none of them change `state`. |
 
 ## Methods
 
@@ -83,12 +83,12 @@ Unlike the four options on the [upload controller](/docs/integration/uploads/)'s
 
 ### Partial responses
 
-A response cut off mid-stream is not handled the same way by every path that can cause it — `messages` never gets an entry for a response that did not finish, in any of these cases, but `currentResponseText` behaves differently in each:
+A response that gets interrupted is not handled the same way by every path that can cause it — `messages` never gets an entry for a response that did not finish, in any of these cases, but `currentResponseText` behaves differently in each:
 
-- **A `sendTimeout`, or any other stream failure,** moves the controller to `error` and fires `onError`. `currentResponseText` keeps whatever text had accumulated up to that point. Persisting it, if you want to, is the host's job — do it from the `onError` callback.
+- **A `sendTimeout` or other stream failure that lands *after* the response has started streaming** moves the controller to `error` and fires `onError`. `currentResponseText` keeps whatever text had accumulated up to that point. Persisting it, if you want to, is the host's job — do it from the `onError` callback.
 - **`abort()` and `hostDisconnected()`** stop the stream and return to `idle` instead — `onError` does not fire for either. `currentResponseText` still keeps the accumulated text, so a host that cares about this case has to check for it right after calling `abort()` itself (or after tearing down the host), not from a callback.
 - **`reset()`** goes further: it clears `currentResponseText` along with everything else, so there is nothing left to read once it returns.
-- **A `send()` call that rejects outright** — before any response starts streaming, such as a network failure the provider throws immediately — also lands in `error`, but `currentResponseText` is untouched by it. It still holds whatever response completed *last*, not anything from the new failed attempt. Reading it as "the answer that just failed" only makes sense for the first case above; here, persisting it would just re-save the previous response.
+- **A call to the provider's `send()` that rejects before any response starts streaming** also lands in `error`, but `currentResponseText` is untouched by it. This covers two different failures the same way: an immediate network error the provider throws right away, and a `sendTimeout` that fires while the provider's own promise is still pending — before it ever hands back a stream to interrupt. Either way, `currentResponseText` still holds whatever response completed *last*, not anything from the new failed attempt. Reading it as "the answer that just failed" only makes sense for the mid-stream case above; here, persisting it would just re-save the previous response. (This is distinct from the guard-clause rejections on `send()` covered above, which reject before the provider is ever called and never touch `state` at all.)
 
 ## The host argument
 
