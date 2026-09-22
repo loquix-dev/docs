@@ -29,3 +29,20 @@ jobs:
 
       - name: Validate release
         run: pnpm validate
+
+  deploy:
+    name: Trigger website deploy
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch to website
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.WEBSITE_DEPLOY_TOKEN }}
+          repository: loquix-dev/website
+          event-type: docs-updated
+          client-payload: |
+            {
+              "docs_ref": "${{ github.sha }}"
+            }
