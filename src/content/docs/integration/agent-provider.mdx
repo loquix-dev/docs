@@ -69,7 +69,7 @@ interface AgentSendOptions {
 }
 ```
 
-- **`signal`** — the controller always passes one. It combines the controller's own abort (from `abort()` or a new `send()` call) with its send timeout into a single signal, so forwarding it to `fetch` covers both a manual stop and the timeout in one place — it bounds the entire exchange, not just the wait for the stream to start.
+- **`signal`** — the controller always passes one. It combines the controller's own abort (only from an explicit `abort()` call) with its send timeout into a single signal, so forwarding it to `fetch` covers both a manual stop and the timeout in one place — it bounds the entire exchange, not just the wait for the stream to start.
 - **`model`** — the model identifier configured on the controller, if any.
 - **`params`** — inference parameters such as `temperature`, `top_p`, or `max_tokens`, passed through as-is.
 - **`systemPrompt`** — a system prompt override, if the controller was configured with one.
