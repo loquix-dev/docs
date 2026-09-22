@@ -19,13 +19,17 @@ import LivePreview from '../../../components/LivePreview.astro';
 ## Preview
 
 <LivePreview label="Opening the picker" compact>
+	<div class="action-row">
+		<button type="button" class="preview-trigger" data-opens="#template-picker-demo">Browse templates</button>
+	</div>
 	<loquix-template-picker
+		id="template-picker-demo"
 		heading="Choose a template"
 		data-props='{"templates":[{"id":"summary","title":"Summarize a document","description":"Condense a long text into key points.","icon":"📄","category":"Writing","prompt":"Summarize this:"},{"id":"rewrite","title":"Rewrite for clarity","description":"Tighten wording without changing meaning.","icon":"✏️","category":"Writing","prompt":"Rewrite this for clarity:"},{"id":"review","title":"Review code","description":"Look for bugs and suggest improvements.","icon":"🔍","category":"Engineering","prompt":"Review this code:"},{"id":"tests","title":"Write tests","description":"Generate unit tests for a function.","icon":"🧪","category":"Engineering","prompt":"Write unit tests for:"}]}'
 	></loquix-template-picker>
 </LivePreview>
 
-The picker renders nothing until it is open — it has no trigger of its own. Set `open` from your own button.
+The picker has no trigger of its own and renders nothing until it is open, so the button above is part of the demo rather than the component. Set `open` from your own control the same way.
 
 ## Usage
 

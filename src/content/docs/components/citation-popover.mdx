@@ -81,6 +81,16 @@ chip.addEventListener('loquix-citation-click', (event) => {
 | --- | --- | --- |
 | `loquix-citation-click` | `{ index, source }` | Fired when the chip is clicked or activated with the keyboard. |
 
+## Stacking
+
+The popover is positioned inside the component and carries a high `z-index`, but a `z-index` only ranks an element within its own stacking context. If any ancestor establishes one — a `transform`, a `filter`, an `opacity` below 1, or an `isolation: isolate` on a layout column — the popover cannot paint above anything outside it, and fixed page chrome such as a sidebar will cover it.
+
+If that happens, the fix is in your layout rather than in the component: remove the isolating property from the ancestor, or raise that ancestor above the chrome it is losing to.
+
+<Aside type="caution" title="In 0.4.1 the popover closes before you can reach it">
+	The panel sits 8px from the chip, and moving the pointer across that gap closed it, which made the external-link affordance unreachable. Until this is fixed, treat the popover as hover-to-read only and put any action on the chip's `loquix-citation-click` instead.
+</Aside>
+
 ## Accessibility
 
 The popover is wired through `aria-describedby`, so a screen reader announces the source as a description of the chip rather than replacing its name. The popover opens on focus as well as hover, and closes on blur or Escape.

@@ -181,4 +181,22 @@ const { label = 'Preview', compact = false, tall = false } = Astro.props;
 			console.error('LivePreview: could not parse data-props', element, error);
 		}
 	});
+
+	// Components that expect the host application to own the trigger — the
+	// template picker, for one — would otherwise preview as an empty frame.
+	// A button marked `data-opens="<selector>"` opens the element it points at.
+	document.querySelectorAll<HTMLElement>('[data-opens]').forEach((trigger) => {
+		const selector = trigger.dataset.opens;
+		if (!selector) return;
+
+		const target = document.querySelector(selector) as (HTMLElement & { open: boolean }) | null;
+		if (!target) {
+			console.error('LivePreview: no element matches data-opens', selector);
+			return;
+		}
+
+		trigger.addEventListener('click', () => {
+			target.open = true;
+		});
+	});
 </script>
