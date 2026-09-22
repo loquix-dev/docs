@@ -1,0 +1,114 @@
+---
+title: Confidence Indicator
+description: Confidence score rendered as a bar, dots, badge, or plain number.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Trust component</p>
+
+`<loquix-confidence-indicator>` shows how sure the assistant is about an answer. You give it a score between 0 and 1; it derives a low, medium, or high level and renders that in one of four shapes.
+
+<div class="component-meta">
+	<span>loquix-confidence-indicator</span>
+	<span>four variants</span>
+	<span>derived levels</span>
+</div>
+
+## Preview
+
+<LivePreview label="Variants across the range">
+	<div class="stack-preview">
+		<loquix-confidence-indicator variant="bar" value="0.92"></loquix-confidence-indicator>
+		<loquix-confidence-indicator variant="dots" value="0.58"></loquix-confidence-indicator>
+		<loquix-confidence-indicator variant="badge" value="0.21"></loquix-confidence-indicator>
+		<loquix-confidence-indicator variant="numeric" value="0.74" label="Answer confidence"></loquix-confidence-indicator>
+	</div>
+</LivePreview>
+
+Top to bottom: high, medium, and low levels derived from the score, then a numeric variant with a custom label.
+
+## Usage
+
+```js
+import '@loquix/core/define/define-confidence-indicator';
+```
+
+```html
+<loquix-confidence-indicator variant="bar" value="0.92"></loquix-confidence-indicator>
+```
+
+```js
+const indicator = document.querySelector('loquix-confidence-indicator');
+
+indicator.value = response.confidence;
+```
+
+## Levels
+
+The level is derived from `value` against two thresholds:
+
+| Condition | Level |
+| --- | --- |
+| `value < lowThreshold` | `low` |
+| between the two | `medium` |
+| `value >= highThreshold` | `high` |
+
+Defaults are `0.4` and `0.75`. Setting `level` explicitly beats the derivation entirely.
+
+<Aside type="note" title="Invalid thresholds fall back rather than break">
+	If the thresholds are not numbers, or the low one is above the high one, both reset to `0.4` and `0.75`. The derived level keeps tracking the value instead of freezing at one level.
+</Aside>
+
+Display is clamped to the range, so `1.4` renders as a full bar and `100%` rather than overflowing. The property itself keeps the value you assigned.
+
+## Variants
+
+| Variant | Shape |
+| --- | --- |
+| `bar` | Horizontal track with a proportional fill. |
+| `dots` | Three dots filled according to the level. |
+| `badge` | Compact pill carrying the level name. |
+| `numeric` | The percentage alone. |
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `value` | `value` | `number` | `0` | Score in `[0, 1]`. Display is clamped to the range; reading the property back returns whatever you set. |
+| `variant` | `variant` | `'bar' \| 'dots' \| 'badge' \| 'numeric'` | `'bar'` | Visual shape. |
+| `level` | `level` | `'low' \| 'medium' \| 'high'` | derived | Overrides the threshold-based level. |
+| `label` | `label` | `string` | localized | Text label, also used for `aria-label`. |
+| `lowThreshold` | `low-threshold` | `number` | `0.4` | Below this, the level is `low`. |
+| `highThreshold` | `high-threshold` | `number` | `0.75` | At or above this, the level is `high`. |
+| `showValue` | `show-value` | `boolean` | `true` | Whether the numeric percentage is rendered alongside the visual. |
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `meter` | The host element, acting as the meter wrapper. |
+| `track` | Bar variant track. |
+| `fill` | Bar variant fill. |
+| `dot` | A single dot in the dots variant. |
+| `value` | Numeric value text. |
+| `label` | Label text. |
+
+## CSS custom properties
+
+Each level has a background, a foreground, and a solid fill.
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-conf-low-bg` | Low-confidence background. |
+| `--loquix-conf-low-color` | Low-confidence foreground. |
+| `--loquix-conf-low-fill` | Low-confidence solid fill for bar and dots. |
+| `--loquix-conf-med-bg` | Medium-confidence background. |
+| `--loquix-conf-med-color` | Medium-confidence foreground. |
+| `--loquix-conf-med-fill` | Medium-confidence solid fill. |
+| `--loquix-conf-high-bg` | High-confidence background. |
+| `--loquix-conf-high-color` | High-confidence foreground. |
+| `--loquix-conf-high-fill` | High-confidence solid fill. |
+
+The low-confidence trio is shared with [Disagreement Marker](/docs/components/disagreement-marker/), so restyling it keeps both consistent.

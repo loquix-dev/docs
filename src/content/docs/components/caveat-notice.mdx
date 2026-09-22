@@ -1,0 +1,74 @@
+---
+title: Caveat Notice
+description: Short standing notice about what the assistant can and cannot be trusted with.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Trust component</p>
+
+`<loquix-caveat-notice>` carries the standing reminder that an assistant can be wrong — the line under a composer, or a note beside a sensitive answer. It is deliberately small and quiet, since it is present all the time.
+
+<div class="component-meta">
+	<span>loquix-caveat-notice</span>
+	<span>three placements</span>
+	<span>text only</span>
+</div>
+
+## Preview
+
+<LivePreview label="Placement variants" compact>
+	<div class="stack-preview">
+		<loquix-caveat-notice variant="footer" message="Loquix can make mistakes. Check important information."></loquix-caveat-notice>
+		<loquix-caveat-notice variant="inline" message="This answer draws on documents last indexed in March."></loquix-caveat-notice>
+		<loquix-caveat-notice variant="contextual" message="Not medical advice. Consult a professional before acting on this."></loquix-caveat-notice>
+	</div>
+</LivePreview>
+
+## Usage
+
+```js
+import '@loquix/core/define/define-caveat-notice';
+```
+
+```html
+<loquix-caveat-notice
+  variant="footer"
+  message="Loquix can make mistakes. Check important information."
+></loquix-caveat-notice>
+```
+
+## Variants
+
+| Variant | Use it for |
+| --- | --- |
+| `footer` | The standing line under the composer. No background, smallest text. |
+| `inline` | A note between messages, on a tinted background. |
+| `contextual` | A warning attached to one specific answer. |
+
+<Aside type="tip" title="One standing caveat, not three">
+	A permanent footer caveat stops being read within a session. Reserve `contextual` for answers that genuinely warrant a second look — a medical, legal, or financial topic — so the stronger notice still registers.
+</Aside>
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `message` | `message` | `string` | — | The caveat text. |
+| `variant` | `variant` | `'footer' \| 'inline' \| 'contextual'` | `'footer'` | Placement style. |
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `notice` | The notice container. |
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-caveat-text-color` | Text color. |
+| `--loquix-caveat-bg` | Background for the `inline` and `contextual` variants. |
+| `--loquix-caveat-font-size` | Font size. Defaults to `0.6875rem`. |
+| `--loquix-caveat-padding` | Inner padding. |

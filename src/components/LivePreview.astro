@@ -23,6 +23,11 @@ const { label = 'Preview', compact = false } = Astro.props;
 	import '@loquix/core/define/define-action-edit';
 	import '@loquix/core/define/define-action-feedback';
 	import '@loquix/core/define/define-attachment-chip';
+	import '@loquix/core/define/define-caveat-notice';
+	import '@loquix/core/define/define-citation-popover';
+	import '@loquix/core/define/define-confidence-indicator';
+	import '@loquix/core/define/define-disagreement-marker';
+	import '@loquix/core/define/define-disclosure-badge';
 	import '@loquix/core/define/define-chat-container';
 	import '@loquix/core/define/define-chat-header';
 	import '@loquix/core/define/define-chat-composer';
@@ -40,6 +45,10 @@ const { label = 'Preview', compact = false } = Astro.props;
 	import '@loquix/core/define/define-model-selector';
 	import '@loquix/core/define/define-prompt-input';
 	import '@loquix/core/define/define-reasoning-block';
+	import '@loquix/core/define/define-source-list';
+	import '@loquix/core/define/define-tool-call';
+	import '@loquix/core/define/define-tool-call-list';
+	import '@loquix/core/define/define-uncertainty-marker';
 	import '@loquix/core/define/define-suggestion-chips';
 	import '@loquix/core/define/define-typing-indicator';
 	import '@loquix/core/define/define-welcome-screen';
@@ -137,5 +146,19 @@ const { label = 'Preview', compact = false } = Astro.props;
 
 	document.querySelectorAll('loquix-mode-selector[data-demo]').forEach((element) => {
 		(element as HTMLElement & { modes: typeof modes }).modes = modes;
+	});
+
+	// Some components expose object-valued properties with `attribute: false`
+	// (tool-call args, citation source, source lists). Pages declare them as JSON
+	// in `data-props` and we assign them once the definitions have loaded.
+	document.querySelectorAll<HTMLElement>('[data-props]').forEach((element) => {
+		const raw = element.dataset.props;
+		if (!raw) return;
+
+		try {
+			Object.assign(element, JSON.parse(raw));
+		} catch (error) {
+			console.error('LivePreview: could not parse data-props', element, error);
+		}
 	});
 </script>

@@ -7,7 +7,7 @@ sidebar:
 
 import { Aside, Card, CardGrid } from '@astrojs/starlight/components';
 
-This documentation targets `@loquix/core` **0.4.1**. Reference pages cover the chat, message, action, attachment, onboarding, and configuration components, and the remaining families are being added family by family.
+This documentation targets `@loquix/core` **0.4.1**. Reference pages cover the chat, message, action, reasoning and trust, attachment, onboarding, and configuration components, and the remaining families are being added family by family.
 
 ## Start with these
 
@@ -56,6 +56,20 @@ This documentation targets `@loquix/core` **0.4.1**. Reference pages cover the c
 | [Generation Controls](/docs/components/generation-controls/) | Stop, pause, and resume actions. |
 | [Reasoning Block](/docs/components/reasoning-block/) | Collapsible reasoning summaries. |
 
+### Reasoning and trust
+
+| Component | Use it for |
+| --- | --- |
+| [Tool Call](/docs/components/tool-call/) | One tool invocation with status, arguments, and outcome. |
+| [Tool Call List](/docs/components/tool-call-list/) | Grouping the tool calls of a single turn. |
+| [Citation Popover](/docs/components/citation-popover/) | Inline numbered citation with a source preview. |
+| [Source List](/docs/components/source-list/) | The sources behind an answer, as a grid or list. |
+| [Confidence Indicator](/docs/components/confidence-indicator/) | How sure the assistant is, as a bar, dots, badge, or number. |
+| [Uncertainty Marker](/docs/components/uncertainty-marker/) | Flagging a phrase as unsure, unverified, or speculative. |
+| [Disclosure Badge](/docs/components/disclosure-badge/) | Stating that an AI produced or altered the content. |
+| [Caveat Notice](/docs/components/caveat-notice/) | Standing reminder about the assistant's limits. |
+| [Disagreement Marker](/docs/components/disagreement-marker/) | Recording that a user disputed an answer. |
+
 ### Attachments
 
 | Component | Use it for |
@@ -83,7 +97,6 @@ This documentation targets `@loquix/core` **0.4.1**. Reference pages cover the c
 `@loquix/core` also exports the following component families. They are available in version 0.4.1, while full reference pages are scheduled after the first documentation release:
 
 - **Attachments:** Attachment Panel
-- **Reasoning and trust:** Tool Call, Tool Call List, Citation Popover, Source List, Confidence Indicator, Uncertainty Marker, Disclosure Badge, Caveat Notice, Disagreement Marker
 - **Feedback:** Feedback Form, Correction Input
 - **Search:** Search Input, Search Sources, Search Result, Search Results, Search Answer, Search Footer, Search Dialog, Search Panel
 - **Configuration:** Dropdown Select, Parameter Panel, Filter Bar

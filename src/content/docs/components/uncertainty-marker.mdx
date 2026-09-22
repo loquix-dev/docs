@@ -1,0 +1,116 @@
+---
+title: Uncertainty Marker
+description: Inline wrapper flagging a phrase as unsure, unverified, or speculative.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Trust component</p>
+
+`<loquix-uncertainty-marker>` wraps a phrase inside generated prose and marks it as something the reader should not take at face value. A tooltip explains why on hover or focus.
+
+<div class="component-meta">
+	<span>loquix-uncertainty-marker</span>
+	<span>three kinds</span>
+	<span>three visual variants</span>
+</div>
+
+## Preview
+
+<LivePreview label="Marked phrases" compact>
+	<p class="citation-demo">
+		The policy changed in
+		<loquix-uncertainty-marker kind="unsure">March 2024</loquix-uncertainty-marker>,
+		and the threshold is
+		<loquix-uncertainty-marker kind="needs-verification" variant="highlight">around 500 orders</loquix-uncertainty-marker>.
+		A revision is
+		<loquix-uncertainty-marker kind="speculative" variant="icon" reason="Not stated in any source document.">likely this quarter</loquix-uncertainty-marker>.
+	</p>
+</LivePreview>
+
+Hover or tab to a marked phrase to see its tooltip.
+
+## Usage
+
+```js
+import '@loquix/core/define/define-uncertainty-marker';
+```
+
+```html
+<loquix-uncertainty-marker kind="needs-verification">
+  around 500 orders
+</loquix-uncertainty-marker>
+```
+
+```js
+const marker = document.querySelector('loquix-uncertainty-marker');
+
+marker.addEventListener('loquix-uncertainty-click', (event) => {
+  openVerificationPanel(event.detail.kind, event.detail.reason);
+});
+```
+
+## Kinds and variants
+
+| Kind | Meaning |
+| --- | --- |
+| `unsure` | The model is not confident in this phrase. |
+| `needs-verification` | Plausible, but a human should confirm it. |
+| `speculative` | An extrapolation rather than something sourced. |
+
+| Variant | Appearance |
+| --- | --- |
+| `underline` | Dotted underline under the phrase. |
+| `highlight` | Tinted background behind the phrase. |
+| `icon` | Underline plus a trailing icon. |
+
+Each kind carries a localized default reason. Set `reason` to replace it with something specific to the claim.
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `kind` | `kind` | `'unsure' \| 'needs-verification' \| 'speculative'` | `'unsure'` | What kind of uncertainty applies. |
+| `variant` | `variant` | `'underline' \| 'highlight' \| 'icon'` | `'underline'` | How the phrase is marked. |
+| `reason` | `reason` | `string` | localized | Explicit reason shown in the tooltip. |
+
+## Events
+
+| Event | Detail | Description |
+| --- | --- | --- |
+| `loquix-uncertainty-click` | `{ kind, reason? }` | Fired on click, Enter, or Space. |
+
+## Content slot
+
+The default slot holds the phrase being marked. Keep it to the words actually in doubt — marking a whole paragraph tells the reader nothing about which part to check.
+
+## Accessibility
+
+The slotted text stays the control's accessible name, and the kind and reason are attached with `aria-describedby`. A screen reader therefore reads the phrase first and the caveat second, instead of replacing the phrase with the caveat.
+
+The tooltip opens on hover and on focus, and closes on mouse leave, blur, or Escape.
+
+<Aside type="tip" title="Mark sparingly">
+	Every marked phrase asks the reader to do work. A paragraph with six markers reads as noise; one or two draw the eye where it matters.
+</Aside>
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `marker` | Wrapper element. |
+| `text` | Container for the slotted text. |
+| `icon` | Trailing icon, in the `icon` variant only. |
+| `tooltip` | The tooltip element. |
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-uncert-unsure-color` | Foreground for the `unsure` kind. |
+| `--loquix-uncert-unsure-bg` | Highlight background for the `unsure` kind. |
+| `--loquix-uncert-verify-color` | Foreground for `needs-verification`. |
+| `--loquix-uncert-verify-bg` | Highlight background for `needs-verification`. |
+| `--loquix-uncert-spec-color` | Foreground for `speculative`. |
+| `--loquix-uncert-spec-bg` | Highlight background for `speculative`. |

@@ -1,0 +1,101 @@
+---
+title: Tool Call List
+description: Collapsible group for the tool calls a single turn ran in parallel.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Reasoning component</p>
+
+`<loquix-tool-call-list>` groups the tool calls belonging to one turn behind a single header. The header summarizes how many ran, and the whole group collapses in one click, so a turn with six lookups does not flood the transcript.
+
+<div class="component-meta">
+	<span>loquix-tool-call-list</span>
+	<span>slot-based grouping</span>
+	<span>counts its own children</span>
+</div>
+
+## Preview
+
+<LivePreview label="Parallel tool calls">
+	<loquix-tool-call-list>
+		<loquix-tool-call
+			name="search_documents"
+			status="success"
+			duration="412"
+			result="3 matches in policies/refunds.md"
+			data-props='{"args":{"query":"refund window"}}'
+		></loquix-tool-call>
+		<loquix-tool-call
+			name="lookup_order"
+			status="success"
+			duration="88"
+			result="Order 4471 — shipped 12 March"
+			data-props='{"args":{"order_id":4471}}'
+		></loquix-tool-call>
+		<loquix-tool-call
+			name="check_inventory"
+			status="error"
+			error="UpstreamTimeout after 5000ms"
+			data-props='{"args":{"sku":"AB-19"}}'
+		></loquix-tool-call>
+	</loquix-tool-call-list>
+</LivePreview>
+
+## Usage
+
+```js
+import '@loquix/core/define/define-tool-call-list';
+import '@loquix/core/define/define-tool-call';
+```
+
+```html
+<loquix-tool-call-list>
+  <loquix-tool-call name="search_documents" status="success"></loquix-tool-call>
+  <loquix-tool-call name="lookup_order" status="success"></loquix-tool-call>
+</loquix-tool-call-list>
+```
+
+The header text is generated from the number of children — "Used 2 tools" — and localized. Set `summary` to replace it with your own wording.
+
+```js
+const group = document.querySelector('loquix-tool-call-list');
+
+group.summary = 'Checked pricing across 3 regions';
+
+group.addEventListener('loquix-tool-group-toggle', (event) => {
+  trackDisclosure('tool-group', event.detail.open);
+});
+```
+
+<Aside type="note" title="Counting ignores stray markup">
+	Children are counted through `assignedElements({ flatten: true })`, filtered to `loquix-tool-call` elements. Whitespace and wrapper elements between the calls do not inflate the count.
+</Aside>
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `summary` | `summary` | `string` | — | Explicit header text. Replaces the localized "Used N tools" count. |
+| `defaultCollapsed` | `default-collapsed` | `boolean` | `false` | Initial collapsed state. User toggles win from then on. |
+
+## Events
+
+| Event | Detail | Description |
+| --- | --- | --- |
+| `loquix-tool-group-toggle` | `{ open }` | Fired when the user expands or collapses the group. |
+
+## Content slot
+
+The default slot takes [Tool Call](/docs/components/tool-call/) children. Anything else renders but is not counted in the summary.
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `container` | Outer wrapper. |
+| `header` | Clickable header button. |
+| `summary` | Summary text. |
+| `chevron` | Expand and collapse indicator. |
+| `items` | Container holding the slotted children. |

@@ -1,0 +1,109 @@
+---
+title: Citation Popover
+description: Inline numbered citation chip that reveals the source on hover or focus.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Trust component</p>
+
+`<loquix-citation-popover>` is the small numbered chip you place inside generated prose. Hovering or focusing it opens a popover with the source title, host, and snippet, so a reader can check a claim without leaving the sentence.
+
+<div class="component-meta">
+	<span>loquix-citation-popover</span>
+	<span>hover and focus</span>
+	<span>URL allowlist</span>
+</div>
+
+## Preview
+
+<LivePreview label="Citations in prose" compact>
+	<p class="citation-demo">
+		The refund window is 30 days from delivery <loquix-citation-popover index="1" data-props='{"source":{"title":"Refund policy","url":"https://example.com/policies/refunds","host":"example.com","snippet":"Customers may request a full refund within 30 days of delivery."}}'></loquix-citation-popover> and applies to unopened items only <loquix-citation-popover index="2" data-props='{"source":{"title":"Returns and exchanges","url":"https://example.com/policies/returns","host":"example.com","snippet":"Items must be unopened and in original packaging to qualify."}}'></loquix-citation-popover>.
+	</p>
+</LivePreview>
+
+Hover or tab to a chip to open its popover.
+
+## Usage
+
+```js
+import '@loquix/core/define/define-citation-popover';
+```
+
+```html
+<loquix-citation-popover index="1"></loquix-citation-popover>
+```
+
+`source` is an object, so assign it as a property.
+
+```js
+const chip = document.querySelector('loquix-citation-popover');
+
+chip.source = {
+  title: 'Refund policy',
+  url: 'https://example.com/policies/refunds',
+  host: 'example.com',
+  snippet: 'Customers may request a full refund within 30 days of delivery.',
+};
+
+chip.addEventListener('loquix-citation-click', (event) => {
+  openSourcePanel(event.detail.source);
+});
+```
+
+## The source object
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `title` | `string` | yes | Source title shown in the popover. |
+| `url` | `string` | yes | Target URL. Validated against an `http(s):` allowlist before rendering. |
+| `host` | `string` | no | Display host, such as `arxiv.org`. |
+| `snippet` | `string` | no | Short excerpt shown under the title. |
+| `favicon` | `string` | no | Favicon URL, validated against the same allowlist. |
+| `id` | `string` | no | Stable identifier for analytics or de-duplication. |
+
+<Aside type="caution" title="Navigation is yours to handle">
+	`url` and `favicon` are checked against an `http(s):` allowlist before they are rendered, but the click event fires regardless. Validate the URL again before navigating if the sources come from an untrusted model response.
+</Aside>
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `index` | `index` | `number` | `1` | One-based citation number shown in the badge. Matches the numbering in [Source List](/docs/components/source-list/). |
+| `source` | — | `Source` | `{ title: '', url: '' }` | Source data. Property-only. |
+
+## Events
+
+| Event | Detail | Description |
+| --- | --- | --- |
+| `loquix-citation-click` | `{ index, source }` | Fired when the chip is clicked or activated with the keyboard. |
+
+## Accessibility
+
+The popover is wired through `aria-describedby`, so a screen reader announces the source as a description of the chip rather than replacing its name. The popover opens on focus as well as hover, and closes on blur or Escape.
+
+Positioning uses Floating UI with `autoUpdate()`, so the popover follows the chip through scrolling and resizing. The cleanup runs on close and on disconnect, so no listeners are left behind when a message is removed from the transcript.
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `chip` | The clickable chip button. |
+| `index` | Numeric badge. |
+| `popover` | Popover panel. |
+| `favicon` | Favicon container inside the popover. |
+| `body` | Text container inside the popover. |
+| `title` | Source title. |
+| `host` | Host name. |
+| `snippet` | Snippet text. |
+| `arrow` | Trailing external-link icon. |
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-ai-color` | Chip foreground and hover background. |
+| `--loquix-ai-color-subtle` | Chip resting background. |

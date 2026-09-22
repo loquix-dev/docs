@@ -1,0 +1,101 @@
+---
+title: Source List
+description: Grid or list of the sources behind an assistant message, with cancelable navigation.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Trust component</p>
+
+`<loquix-source-list>` collects the sources behind an answer into a block under the message. Numbering is one-based and lines up with the chips from [Citation Popover](/docs/components/citation-popover/), so "3" in the prose is "3" in the list.
+
+<div class="component-meta">
+	<span>loquix-source-list</span>
+	<span>grid or list layout</span>
+	<span>cancelable clicks</span>
+</div>
+
+## Preview
+
+<LivePreview label="Sources under an answer">
+	<loquix-source-list
+		layout="grid"
+		data-props='{"sources":[{"title":"Refund policy","url":"https://example.com/policies/refunds","host":"example.com","snippet":"Customers may request a full refund within 30 days of delivery."},{"title":"Returns and exchanges","url":"https://example.com/policies/returns","host":"example.com","snippet":"Items must be unopened and in original packaging."},{"title":"Shipping FAQ","url":"https://example.com/faq/shipping","host":"example.com","snippet":"Standard delivery takes three to five business days."}]}'
+	></loquix-source-list>
+</LivePreview>
+
+## Usage
+
+```js
+import '@loquix/core/define/define-source-list';
+```
+
+```html
+<loquix-source-list layout="list"></loquix-source-list>
+```
+
+`sources` is an array, so assign it as a property.
+
+```js
+const list = document.querySelector('loquix-source-list');
+
+list.sources = answer.citations;
+```
+
+### Intercepting a click
+
+`loquix-source-click` is cancelable and fires before navigation. Call `preventDefault()` to keep the reader in the conversation — opening the source in a side panel, for instance.
+
+```js
+list.addEventListener('loquix-source-click', (event) => {
+  event.preventDefault();
+  openSourcePanel(event.detail.source);
+});
+```
+
+## Layouts
+
+| Layout | Use it for |
+| --- | --- |
+| `grid` | Cards side by side. Suits three to six sources under a wide message. |
+| `list` | Stacked rows. Suits narrow columns or long titles. |
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `sources` | — | `Source[]` | `[]` | The sources to render. Property-only. See [the source object](/docs/components/citation-popover/#the-source-object). |
+| `layout` | `layout` | `'grid' \| 'list'` | `'grid'` | Display variant. Reflected to the host. |
+| `heading` | `heading` | `string` | localized | Replaces the generated "N sources" heading. |
+
+## Events
+
+| Event | Detail | Description |
+| --- | --- | --- |
+| `loquix-source-click` | `{ index, source }` | Cancelable. Fired before navigation, so `preventDefault()` keeps the user on the page. |
+
+<Aside type="caution" title="Unsafe URLs render but do not link">
+	Each source's `url` and `favicon` are checked against an `http(s):` allowlist. A source that fails the check still renders, as an inert `<span>` instead of an anchor — visible to the reader, but not clickable.
+</Aside>
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `container` | Outer wrapper. |
+| `header` | The "N sources" header row. |
+| `items` | Grid or list container. |
+| `source` | A single source row, `<a>` or `<span>`. |
+| `top` | Top metadata row inside a source. |
+| `index` | Numeric badge. |
+| `host` | Host name. |
+| `title` | Source title. |
+| `snippet` | Snippet text. |
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-ai-color` | Hover border and index foreground. |
+| `--loquix-ai-color-subtle` | Index background. |

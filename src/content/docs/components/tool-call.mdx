@@ -1,0 +1,131 @@
+---
+title: Tool Call
+description: Expandable panel for a single tool invocation, with status, arguments, and result or error.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Reasoning component</p>
+
+`<loquix-tool-call>` shows one tool invocation as a compact row that expands to the full arguments and outcome. The header carries the tool name, an inline argument summary, and a status pill; the body holds arguments plus either the result or the error.
+
+<div class="component-meta">
+	<span>loquix-tool-call</span>
+	<span>four lifecycle states</span>
+	<span>expandable body</span>
+</div>
+
+## Preview
+
+<LivePreview label="Tool lifecycle">
+	<div class="stack-preview">
+		<loquix-tool-call
+			name="search_documents"
+			status="success"
+			duration="412"
+			result="3 matches in policies/refunds.md, policies/returns.md, faq/shipping.md"
+			data-props='{"args":{"query":"refund window","limit":3}}'
+		></loquix-tool-call>
+		<loquix-tool-call
+			name="fetch_invoice"
+			status="running"
+			data-props='{"args":{"invoice_id":"INV-2291"}}'
+		></loquix-tool-call>
+		<loquix-tool-call
+			name="charge_card"
+			status="error"
+			error="PaymentDeclined: insufficient funds"
+			data-props='{"args":{"amount":4200,"currency":"EUR"}}'
+		></loquix-tool-call>
+	</div>
+</LivePreview>
+
+Running and failed calls open by default, because that is where a user looks first. Successful and pending ones stay collapsed.
+
+## Usage
+
+```js
+import '@loquix/core/define/define-tool-call';
+```
+
+```html
+<loquix-tool-call name="search_documents" status="running"></loquix-tool-call>
+```
+
+`args` is an object, so it is set as a property rather than an attribute.
+
+```js
+const call = document.querySelector('loquix-tool-call');
+
+call.args = { query: 'refund window', limit: 3 };
+
+// later, when the tool returns
+call.status = 'success';
+call.duration = 412;
+call.result = formatToolResult(payload);
+```
+
+<Aside type="note" title="`args` has no attribute">
+	There is no JSON parsing from markup — assign `args` in JavaScript, or pass the prop through the React wrapper. Serialization for display is guarded against cyclic objects, so a self-referencing object will not throw.
+</Aside>
+
+## Status
+
+| Status | Meaning | Opens by default |
+| --- | --- | --- |
+| `pending` | Queued, not started. | No |
+| `running` | In flight. The icon becomes a spinner. | Yes |
+| `success` | Completed. `duration` is shown when set. | No |
+| `error` | Failed. `error` text is shown in the body. | Yes |
+
+The initial open state comes from `defaultOpen` when you set it explicitly, otherwise from `status`. Once the user toggles the panel, later status changes no longer re-derive it — only an explicit write to `defaultOpen` does.
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `name` | `name` | `string` | `''` | Tool name, rendered in monospace. |
+| `args` | — | `object` | — | Call arguments. Property-only. Drives both the inline summary and the expanded block. |
+| `status` | `status` | `'pending' \| 'running' \| 'success' \| 'error'` | `'pending'` | Lifecycle state. |
+| `result` | `result` | `string` | — | Multi-line result text. Whitespace is preserved. |
+| `error` | `error` | `string` | — | Error text, shown when `status` is `error`. |
+| `duration` | `duration` | `number` | — | Duration in milliseconds. Shown only on `success`. |
+| `toolId` | `tool-id` | `string` | — | Stable identifier for analytics. Reflected, and echoed in the toggle event. |
+| `defaultOpen` | `default-open` | `boolean` | `false` | Initial open state. Overrides the status-based default. |
+| `compact` | `compact` | `boolean` | `false` | Tighter padding. |
+
+## Events
+
+| Event | Detail | Description |
+| --- | --- | --- |
+| `loquix-tool-call-toggle` | `{ name, toolId?, open }` | Fired when the user expands or collapses the panel. |
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `container` | Outer wrapper. |
+| `header` | Clickable header button. |
+| `icon` | Leading tool icon, or the spinner while running. |
+| `name` | Tool name with the inline argument summary. |
+| `arg-summary` | The inline argument summary alone. |
+| `status` | Status pill on the right. |
+| `chevron` | Expand and collapse indicator. |
+| `body` | Expanded body. |
+| `args` | Arguments block. |
+| `result` | Result block. |
+| `error` | Error block. |
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-tool-bg` | Background color. |
+| `--loquix-tool-success-bg` | Status pill background on success. |
+| `--loquix-tool-error-bg` | Status pill and icon background on error. |
+| `--loquix-tool-result-bg` | Result block background. |
+| `--loquix-tool-result-border` | Result block border. |
+| `--loquix-tool-error-border` | Error block border. |
+
+Group several calls under [Tool Call List](/docs/components/tool-call-list/) when a turn runs them in parallel.

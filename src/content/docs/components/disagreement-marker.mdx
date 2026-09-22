@@ -1,0 +1,113 @@
+---
+title: Disagreement Marker
+description: Pill or banner marking an assistant message the user has disputed.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Trust component</p>
+
+`<loquix-disagreement-marker>` records that a user pushed back on an answer and leaves that visible in the transcript. It comes as a small inline pill for trailing references, or as a banner attached to the disputed message.
+
+<div class="component-meta">
+	<span>loquix-disagreement-marker</span>
+	<span>inline or banner</span>
+	<span>optional resolution</span>
+</div>
+
+## Preview
+
+<LivePreview label="Inline pill and banner">
+	<div class="stack-preview">
+		<loquix-disagreement-marker variant="inline" reason="Figures are from 2023"></loquix-disagreement-marker>
+		<loquix-disagreement-marker
+			variant="banner"
+			reason="The quoted refund window contradicts the current policy document."
+			resolvable
+		></loquix-disagreement-marker>
+	</div>
+</LivePreview>
+
+## Usage
+
+```js
+import '@loquix/core/define/define-disagreement-marker';
+```
+
+```html
+<loquix-disagreement-marker
+  variant="banner"
+  reason="The quoted refund window contradicts the current policy document."
+  resolvable
+></loquix-disagreement-marker>
+```
+
+```js
+const marker = document.querySelector('loquix-disagreement-marker');
+
+marker.addEventListener('loquix-disagreement-resolve', () => {
+  clearDisagreement(messageId);
+  marker.remove();
+});
+```
+
+The component does not remove or hide itself when the resolve button is clicked — it reports the intent and leaves the decision to you.
+
+## Variants
+
+| Variant | Use it for |
+| --- | --- |
+| `inline` | A compact pill after a sentence or in a message footer. |
+| `banner` | A block attached to the disputed message, with room for a reason and extra content. |
+
+`resolvable` adds a "Mark resolved" button, and applies to the banner only.
+
+<Aside type="note" title="The slot is banner-only">
+	Content in the default slot renders under the title and reason in the banner variant. The inline pill ignores it.
+</Aside>
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `variant` | `variant` | `'inline' \| 'banner'` | `'inline'` | Visual shape. |
+| `reason` | `reason` | `string` | — | Shown beneath the title in the banner, or after the label in the pill. |
+| `resolvable` | `resolvable` | `boolean` | `false` | Banner only. Shows the "Mark resolved" button. |
+
+## Events
+
+| Event | Detail | Description |
+| --- | --- | --- |
+| `loquix-disagreement-resolve` | — | Fired when the resolve button is clicked. |
+
+## Content slot
+
+Banner only. Use it for what happens next — a correction, a link to the authoritative document, a note that a human is reviewing.
+
+```html
+<loquix-disagreement-marker variant="banner" reason="Figures are from 2023">
+  <a href="https://example.com/policies/refunds">Open the current policy</a>
+</loquix-disagreement-marker>
+```
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `marker` | Wrapper element — the pill inline, the container as a banner. |
+| `icon` | Leading icon. |
+| `body` | Banner body holding title, reason, and slotted content. |
+| `title` | Banner title. |
+| `reason` | Banner reason text. |
+| `resolve` | The "Mark resolved" button. |
+
+## CSS custom properties
+
+The palette is shared with the low-confidence level of [Confidence Indicator](/docs/components/confidence-indicator/), so both read as the same kind of warning.
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-conf-low-bg` | Background color. |
+| `--loquix-conf-low-color` | Foreground color. |
+| `--loquix-conf-low-fill` | Border accent color. |
