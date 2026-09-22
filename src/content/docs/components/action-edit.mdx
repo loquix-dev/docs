@@ -1,0 +1,164 @@
+---
+title: Action Edit
+description: Edit control for user messages, with an inline textarea or a handoff to the main composer.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Action component</p>
+
+`<loquix-action-edit>` lets a user revise a message they already sent. It renders a pencil trigger and then takes one of two routes, chosen with `mode`: edit in place inside the bubble, or hand the text to the main composer and wait.
+
+<div class="component-meta">
+	<span>loquix-action-edit</span>
+	<span>inline and composer modes</span>
+	<span>three lifecycle events</span>
+</div>
+
+## Preview
+
+<LivePreview label="Inline editing" compact>
+	<div class="action-row">
+		<loquix-action-edit
+			mode="inline"
+			message-id="msg-42"
+			content="Summarise the quarterly report in three bullet points."
+		></loquix-action-edit>
+	</div>
+</LivePreview>
+
+Click the pencil to open the editor. Change the text and Save becomes available — it stays disabled while the text is empty or unchanged.
+
+## Modes
+
+**`inline`** replaces the message content with a textarea plus Save and Cancel buttons. The component owns the editing UI, and you receive the result through `loquix-edit-submit`.
+
+**`composer`** dispatches `loquix-edit-start` and renders an "Editing…" badge instead of a textarea. The host application — or [Chat Container](/docs/components/chat-container/) — moves the text into the main composer input. The badge stays until you call `completeEdit()` or `cancelEditing()`.
+
+Pick `inline` when messages are edited in place, and `composer` when your app has one prominent input that should own all typing.
+
+## Usage
+
+```js
+import '@loquix/core/define/define-action-edit';
+```
+
+```html
+<loquix-action-edit
+  mode="inline"
+  message-id="msg-42"
+  content="Summarise the quarterly report in three bullet points."
+></loquix-action-edit>
+```
+
+### Inline mode
+
+```js
+const edit = document.querySelector('loquix-action-edit');
+
+edit.addEventListener('loquix-edit-submit', (event) => {
+  const { messageId, oldContent, newContent } = event.detail;
+
+  if (newContent !== oldContent) {
+    resubmitMessage(messageId, newContent);
+  }
+});
+```
+
+### Composer mode
+
+In composer mode you move the text across on start, then finish the edit through the component's methods once the user sends or abandons it.
+
+```js
+const edit = document.querySelector('loquix-action-edit');
+const composer = document.querySelector('loquix-chat-composer');
+
+edit.addEventListener('loquix-edit-start', (event) => {
+  composer.value = event.detail.content;
+  composer.focus();
+});
+
+composer.addEventListener('loquix-submit', (event) => {
+  // Clears the badge and fires loquix-edit-submit with both versions.
+  edit.completeEdit(event.detail.value);
+});
+
+cancelButton.addEventListener('click', () => edit.cancelEditing());
+```
+
+<Aside type="caution" title="Finish through the methods, not the property">
+	Setting `editing = false` by hand hides the badge but fires nothing, so your submit handler never runs. Call `completeEdit()` or `cancelEditing()` instead — they reset the state and emit the matching event.
+</Aside>
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `mode` | `mode` | `'inline' \| 'composer'` | `'inline'` | Editing strategy. Reflected to the host. |
+| `messageId` | `message-id` | `string` | `''` | Identifier echoed in every event detail. |
+| `content` | `content` | `string` | `''` | Current message text. Usually assigned as a property, since message text is long and dynamic. |
+| `editing` | `editing` | `boolean` | `false` | Whether editing is active. Reflected, so you can style the surrounding bubble. Read it rather than setting it — use the methods below to change state. |
+| `disabled` | `disabled` | `boolean` | `false` | Disables the trigger button. |
+| `submitLabel` | `submit-label` | `string` | localized | Label for the submit button in inline mode. Defaults to "Save & Submit". |
+| `cancelLabel` | `cancel-label` | `string` | localized | Label for the cancel button. Defaults to "Cancel". |
+| `placeholder` | `placeholder` | `string` | `''` | Placeholder for the textarea. |
+
+## Events
+
+| Event | Detail | Description |
+| --- | --- | --- |
+| `loquix-edit-start` | `{ messageId, content }` | Fired when the user activates the trigger. |
+| `loquix-edit-submit` | `{ messageId, oldContent, newContent }` | Fired when the edit is confirmed. Never fires for empty or unchanged text — the Save button stays disabled in that case. |
+| `loquix-edit-cancel` | `{ messageId }` | Fired when the user cancels. |
+
+## Methods
+
+| Method | Description |
+| --- | --- |
+| `startEditing()` | Enters the editing state, captures the current `content` as the baseline, and fires `loquix-edit-start`. Equivalent to the user clicking the trigger. |
+| `completeEdit(newContent)` | Finishes the edit with the given text, leaves the editing state, and fires `loquix-edit-submit`. This is how composer mode confirms an edit. |
+| `cancelEditing()` | Leaves the editing state and fires `loquix-edit-cancel`. |
+
+<Aside type="note" title="`editing` is not a way in">
+	Setting the `editing` attribute or property directly shows the editing UI but skips `startEditing()`, so the component never captures the baseline text and Save stays disabled. Call `startEditing()` to open the editor from code.
+</Aside>
+
+## Slots
+
+| Slot | Purpose |
+| --- | --- |
+| `icon` | Custom trigger icon, replacing the default pencil. |
+| `editor-footer` | Content between the textarea and the buttons — a character count, a warning, a branch note. |
+| `editing-indicator` | Custom indicator replacing the default badge in composer mode. |
+
+```html
+<loquix-action-edit mode="inline" message-id="msg-42">
+  <span slot="editor-footer">Editing resends the message and discards later replies.</span>
+</loquix-action-edit>
+```
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `trigger` | The pencil-icon trigger button. |
+| `textarea` | The `<textarea>` in inline mode. |
+| `actions` | Container for the Submit and Cancel buttons. |
+| `submit-button` | The Save & Submit button. |
+| `cancel-button` | The Cancel button. |
+| `editing-badge` | The "Editing…" badge in composer mode. |
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-edit-icon-size` | Trigger icon size. |
+| `--loquix-edit-icon-color` | Trigger icon color. |
+| `--loquix-edit-icon-color-hover` | Trigger icon hover color. |
+| `--loquix-edit-highlight-color` | Badge and bubble highlight color. |
+| `--loquix-edit-border-color` | Textarea border color. |
+| `--loquix-edit-textarea-bg` | Textarea background. |
+| `--loquix-edit-textarea-min-height` | Textarea minimum height. |
+| `--loquix-edit-textarea-max-height` | Textarea maximum height. |
+| `--loquix-edit-button-gap` | Gap between the Submit and Cancel buttons. |

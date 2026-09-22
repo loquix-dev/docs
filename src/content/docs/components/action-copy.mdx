@@ -1,0 +1,92 @@
+---
+title: Action Copy
+description: Copy-to-clipboard button that confirms the copy with a temporary checkmark.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Action component</p>
+
+`<loquix-action-copy>` is a ready-made copy button for message toolbars. It ships with its own clipboard icon, fires `loquix-copy` on click, and swaps to a checkmark for two seconds so the user sees the copy landed.
+
+<div class="component-meta">
+	<span>loquix-action-copy</span>
+	<span>built-in icon</span>
+	<span>timed confirmation</span>
+</div>
+
+## Preview
+
+<LivePreview label="Copy with confirmation" compact>
+	<div class="action-row action-row--spaced">
+		<loquix-action-copy></loquix-action-copy>
+		<loquix-action-copy copied></loquix-action-copy>
+		<loquix-action-copy disabled></loquix-action-copy>
+	</div>
+</LivePreview>
+
+The three buttons show the default, confirmed, and disabled states. Clicking the first one switches it to the checkmark for two seconds.
+
+## Usage
+
+```js
+import '@loquix/core/define/define-action-copy';
+```
+
+```html
+<loquix-action-copy></loquix-action-copy>
+```
+
+The component does not touch the clipboard itself — it reports the intent and manages the visual state, leaving the write to you.
+
+```js
+const copy = document.querySelector('loquix-action-copy');
+
+copy.addEventListener('loquix-copy', async () => {
+  await navigator.clipboard.writeText(message.content);
+});
+```
+
+<Aside type="note" title="Clipboard access needs a secure context">
+	`navigator.clipboard` is unavailable on plain HTTP and in some embedded webviews. Keep a fallback path if your app runs outside a secure context.
+</Aside>
+
+## Properties
+
+Inherits every property from [Action Button](/docs/components/action-button/) and adds one of its own.
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `copied` | `copied` | `boolean` | `false` | Confirmed state. Reflected to the host so you can target it in CSS. Set automatically for two seconds after a click. |
+| `action` | `action` | `string` | `''` | Optional extra event name dispatched alongside `loquix-copy`. |
+| `label` | `label` | `string` | `''` | Accessible label. Falls back to the localized "Copy message". |
+| `disabled` | `disabled` | `boolean` | `false` | Disables the button. |
+
+## Events
+
+| Event | Detail | Description |
+| --- | --- | --- |
+| `loquix-copy` | — | Fired when the button is clicked. |
+| *value of `action`* | `CustomEvent` | Also fired when `action` is set, for consistency with the base button. |
+
+## Content slot
+
+The default slot replaces the built-in clipboard and checkmark icons. Leave it empty to keep them, including the automatic swap between the two states.
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `button` | The `<button>` element, inherited from the base action button. |
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-action-copied-color` | Color of the checkmark in the confirmed state. |
+| `--loquix-action-size` | Width and height of the button. |
+| `--loquix-action-bg` | Default background. |
+| `--loquix-action-hover-bg` | Hover background. |
+| `--loquix-action-color` | Default icon color. |
+| `--loquix-action-hover-color` | Hover icon color. |

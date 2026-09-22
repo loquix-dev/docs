@@ -1,0 +1,110 @@
+---
+title: Action Feedback
+description: Thumbs-up and thumbs-down button with a toggleable selected state.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Action component</p>
+
+`<loquix-action-feedback>` collects a quick rating on a response. One element renders one thumb — set `sentiment` to choose which — and reports clicks through `loquix-feedback`. Pair two of them for the usual thumbs-up/thumbs-down control.
+
+<div class="component-meta">
+	<span>loquix-action-feedback</span>
+	<span>built-in icons</span>
+	<span>aria-pressed state</span>
+</div>
+
+## Preview
+
+<LivePreview label="Rating a response" compact>
+	<div class="action-row action-row--spaced">
+		<span class="action-row">
+			<loquix-action-feedback sentiment="positive"></loquix-action-feedback>
+			<loquix-action-feedback sentiment="negative"></loquix-action-feedback>
+		</span>
+		<span class="action-row">
+			<loquix-action-feedback sentiment="positive" active></loquix-action-feedback>
+			<loquix-action-feedback sentiment="negative"></loquix-action-feedback>
+		</span>
+	</div>
+</LivePreview>
+
+The right-hand pair shows the state after the user picked the positive rating.
+
+## Usage
+
+```js
+import '@loquix/core/define/define-action-feedback';
+```
+
+```html
+<loquix-action-feedback sentiment="positive"></loquix-action-feedback>
+<loquix-action-feedback sentiment="negative"></loquix-action-feedback>
+```
+
+Selection is handled for you. A click toggles `active` on the button, and if it became active, the component clears `active` on sibling feedback buttons with the other sentiment — so a thumbs-up switches a previous thumbs-down off without any code from you.
+
+```js
+const rating = document.querySelector('loquix-action-feedback[sentiment="positive"]');
+
+rating.addEventListener('loquix-feedback', (event) => {
+  // `active` is already updated by the time the event fires.
+  sendRating(messageId, event.detail.sentiment, event.target.active);
+});
+```
+
+Because a second click toggles the rating back off, read `event.target.active` to tell "rated positive" from "rating withdrawn".
+
+<Aside type="caution" title="Mutual exclusion is scoped to the parent element">
+	The component looks for sibling buttons under its own `parentElement`. Keep a thumbs-up and thumbs-down pair inside the same wrapper, or each will toggle independently.
+</Aside>
+
+<Aside type="tip" title="Collecting the reason too">
+	For structured follow-up after a rating — a comment box, a category picker — pair this with Feedback Form and Correction Input, both available in the package.
+</Aside>
+
+## Properties
+
+Inherits every property from [Action Button](/docs/components/action-button/) and adds two of its own.
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `sentiment` | `sentiment` | `'positive' \| 'negative'` | `'positive'` | Which thumb to render, and the value reported in the event detail. |
+| `active` | `active` | `boolean` | `false` | Selected state. Toggled by the component on each click, and reflected to `aria-pressed`. Set it yourself to restore a stored rating. |
+| `action` | `action` | `string` | `''` | Optional extra event name dispatched alongside `loquix-feedback`. |
+| `label` | `label` | `string` | `''` | Accessible label. Falls back to the localized "Good response" or "Bad response". |
+| `disabled` | `disabled` | `boolean` | `false` | Disables the button. |
+
+## Events
+
+| Event | Detail | Description |
+| --- | --- | --- |
+| `loquix-feedback` | `{ sentiment: 'positive' \| 'negative' }` | Fired when the button is clicked. |
+| *value of `action`* | `CustomEvent` | Also fired when `action` is set, for consistency with the base button. |
+
+## Content slot
+
+The default slot replaces the built-in thumb icon. Leave it empty to keep the icon that matches `sentiment`.
+
+## Accessibility
+
+The button exposes `aria-pressed`, so assistive technology announces the rating as a toggle rather than a plain button. Set `active` from your stored rating when the conversation loads, and the announced state stays correct after a reload.
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `button` | The `<button>` element, inherited from the base action button. |
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-action-active-color` | Icon color while `active` is true. |
+| `--loquix-action-size` | Width and height of the button. |
+| `--loquix-action-bg` | Default background. |
+| `--loquix-action-hover-bg` | Hover background. |
+| `--loquix-action-color` | Default icon color. |
+| `--loquix-action-hover-color` | Hover icon color. |

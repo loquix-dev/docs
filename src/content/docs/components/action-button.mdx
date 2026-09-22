@@ -1,0 +1,115 @@
+---
+title: Action Button
+description: Generic icon button for message toolbars, dispatching a custom event name you choose.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Action component</p>
+
+`<loquix-action-button>` is the base icon button used inside message toolbars. It renders whatever you slot into it and dispatches an event whose name you set through the `action` property, so a single element covers regenerate, share, bookmark, or any other per-message command.
+
+<div class="component-meta">
+	<span>loquix-action-button</span>
+	<span>slot-driven icon</span>
+	<span>configurable event name</span>
+</div>
+
+## Preview
+
+<LivePreview label="Toolbar actions">
+	<div class="action-row">
+		<loquix-action-button action="loquix-regenerate" label="Regenerate response">
+			<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+				<polyline points="23 4 23 10 17 10"></polyline>
+				<path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+			</svg>
+		</loquix-action-button>
+		<loquix-action-button action="loquix-share" label="Share response">
+			<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+				<circle cx="18" cy="5" r="3"></circle>
+				<circle cx="6" cy="12" r="3"></circle>
+				<circle cx="18" cy="19" r="3"></circle>
+				<line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+				<line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+			</svg>
+		</loquix-action-button>
+		<loquix-action-button action="loquix-bookmark" label="Save response" disabled>
+			<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+				<path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+			</svg>
+		</loquix-action-button>
+	</div>
+</LivePreview>
+
+## Usage
+
+```js
+import '@loquix/core/define/define-action-button';
+```
+
+```html
+<loquix-action-button action="loquix-regenerate" label="Regenerate response">
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+    <polyline points="23 4 23 10 17 10"></polyline>
+    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+  </svg>
+</loquix-action-button>
+```
+
+The button dispatches the event named by `action`, so listen for that name rather than a fixed one.
+
+```js
+const button = document.querySelector('loquix-action-button');
+
+button.addEventListener('loquix-regenerate', () => {
+  regenerate(currentMessageId);
+});
+```
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `action` | `action` | `string` | `''` | Name of the custom event dispatched on click. |
+| `label` | `label` | `string` | `''` | Accessible label applied to the inner button. |
+| `disabled` | `disabled` | `boolean` | `false` | Disables the button and blocks the event. |
+
+## Events
+
+| Event | Detail | Description |
+| --- | --- | --- |
+| *value of `action`* | `CustomEvent` | Fired on click. The event name equals the `action` property, so `action="loquix-share"` dispatches `loquix-share`. |
+
+<Aside type="caution" title="Set an action name">
+	With an empty `action`, the click produces no event. Always provide both `action` and `label` — the label is the button's only accessible name, since the icon is slotted content.
+</Aside>
+
+## Content slot
+
+The default slot holds the icon. Nothing is rendered without it, so this component always needs slotted content — unlike [Action Copy](/docs/components/action-copy/) and [Action Feedback](/docs/components/action-feedback/), which ship their own icons.
+
+```html
+<loquix-action-button action="loquix-pin" label="Pin message">
+  <svg viewBox="0 0 24 24" width="16" height="16"><!-- any icon --></svg>
+</loquix-action-button>
+```
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `button` | The `<button>` element. |
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-action-size` | Width and height of the button. |
+| `--loquix-action-bg` | Default background. |
+| `--loquix-action-hover-bg` | Hover background. |
+| `--loquix-action-color` | Default icon color. |
+| `--loquix-action-hover-color` | Hover icon color. |
+
+These variables are shared by every action component, so setting them once on a common ancestor themes the whole toolbar.

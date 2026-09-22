@@ -264,6 +264,24 @@ header.header {
 	border-radius: 1rem;
 }
 
+.loquix-preview .action-row {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	justify-self: center;
+	gap: 0.35rem;
+}
+
+.loquix-preview .action-row--spaced {
+	gap: 1.25rem;
+}
+
+/* Starlight adds margin-block-start to any element preceded by a sibling,
+   which pushes every row item but the first out of alignment. */
+.loquix-preview .action-row > * {
+	margin-block: 0;
+}
+
 .loquix-preview loquix-model-selector {
 	justify-self: center;
 }

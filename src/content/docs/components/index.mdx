@@ -7,7 +7,7 @@ sidebar:
 
 import { Aside, Card, CardGrid } from '@astrojs/starlight/components';
 
-This documentation targets `@loquix/core` **0.4.1**. The first release provides complete reference pages for the primary chat, message, attachment, onboarding, and configuration components.
+This documentation targets `@loquix/core` **0.4.1**. Reference pages cover the chat, message, action, attachment, onboarding, and configuration components, and the remaining families are being added family by family.
 
 ## Start with these
 
@@ -47,6 +47,10 @@ This documentation targets `@loquix/core` **0.4.1**. The first release provides 
 | [Message Content](/docs/components/message-content/) | Text, code, and streaming cursors. |
 | [Message Avatar](/docs/components/message-avatar/) | Participant identity and activity state. |
 | [Message Actions](/docs/components/message-actions/) | Copy, regenerate, feedback, and edit actions. |
+| [Action Button](/docs/components/action-button/) | Generic icon button with a configurable event name. |
+| [Action Copy](/docs/components/action-copy/) | Copy to clipboard with a timed confirmation. |
+| [Action Edit](/docs/components/action-edit/) | Inline or composer-based message editing. |
+| [Action Feedback](/docs/components/action-feedback/) | Thumbs-up and thumbs-down rating. |
 | [Message Attachments](/docs/components/message-attachments/) | Files and image cards inside messages. |
 | [Typing Indicator](/docs/components/typing-indicator/) | Pending and named activity states. |
 | [Generation Controls](/docs/components/generation-controls/) | Stop, pause, and resume actions. |
@@ -78,7 +82,6 @@ This documentation targets `@loquix/core` **0.4.1**. The first release provides 
 
 `@loquix/core` also exports the following component families. They are available in version 0.4.1, while full reference pages are scheduled after the first documentation release:
 
-- **Actions:** Action Button, Action Copy, Action Edit, Action Feedback
 - **Attachments:** Attachment Panel
 - **Reasoning and trust:** Tool Call, Tool Call List, Citation Popover, Source List, Confidence Indicator, Uncertainty Marker, Disclosure Badge, Caveat Notice, Disagreement Marker
 - **Feedback:** Feedback Form, Correction Input
