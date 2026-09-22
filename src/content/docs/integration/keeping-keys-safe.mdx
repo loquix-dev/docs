@@ -1,0 +1,36 @@
+---
+title: Keeping keys safe
+description: Why a provider API key never belongs in the browser, and where it lives instead.
+---
+
+## The rule
+
+A provider API key never reaches the browser. Anything you ship to a client — JavaScript source, a bundled config object, an environment variable exposed at build time — is readable by whoever is running that client. There is no way to hand a key to code running on a user's machine and keep it from that user.
+
+An `Origin` header check does not change this. `Origin` is a request header the client sends about itself; nothing stops a browser's own `fetch`, a proxy, or a modified client from sending whichever value it likes. Checking it can narrow which sites a browser will make a real cross-origin request from, but it authenticates a request's declared origin, not the code that made it, and it does nothing once a key is already sitting in a script tag or a shipped bundle for anyone to read.
+
+If a key can be extracted from what you send to the browser, it is compromised, regardless of what checks the request that carries it passes.
+
+## What this means for architecture
+
+Your backend sits between the UI and the model. The browser talks to your backend; your backend talks to the vendor.
+
+```
+Loquix components → your backend → provider API
+```
+
+The browser never holds a provider credential and never makes a request the vendor accepts directly. Your backend is the only thing that presents the key, and it presents it in requests it constructs itself, from messages it received over a connection it controls.
+
+An [agent provider](/docs/integration/agent-provider/) you write is exactly the seam where this split happens: `send()` runs in the browser and calls your backend, not the vendor, so the object shipped to the client never contains a credential to begin with.
+
+## What the components already assume
+
+Loquix components never call a backend. They render conversation state and dispatch events; the [agent controller](/docs/integration/agent-controller/) drives that state by calling the provider you hand it. Nothing in the catalog, and nothing in the controller, makes an outbound request to a model vendor — that request only exists inside the provider's `send()`, and only your code decides what it targets.
+
+This is why the split above costs you nothing extra to adopt: the provider interface already expects to call *something you control*, and putting your own backend on the other end of that call is the interface working as designed, not a workaround bolted onto it.
+
+The same applies to file uploads. An [upload provider](/docs/integration/uploads/)'s own interface comment is explicit that implementations must not embed secret keys client-side — operations that need one, such as deletion or signed uploads, belong behind a server-side proxy, not inside a provider shipped to the browser.
+
+## Proxy recipes
+
+Concrete recipes for putting specific vendors behind a proxy live on the HTTP adapter's page.
