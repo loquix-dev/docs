@@ -7,7 +7,7 @@ description: Why a provider API key never belongs in the browser, and where it l
 
 A provider API key never reaches the browser. Anything you ship to a client — JavaScript source, a bundled config object, an environment variable exposed at build time — is readable by whoever is running that client. There is no way to hand a key to code running on a user's machine and keep it from that user.
 
-An `Origin` header check does not change this. `Origin` is a request header the client sends about itself; nothing stops a browser's own `fetch`, a proxy, or a modified client from sending whichever value it likes. Checking it can narrow which sites a browser will make a real cross-origin request from, but it authenticates a request's declared origin, not the code that made it, and it does nothing once a key is already sitting in a script tag or a shipped bundle for anyone to read.
+An `Origin` header check does not change this. A real browser does set that header itself — `Origin` is a forbidden header name, so page JavaScript cannot override it in a `fetch` call. But nothing about an HTTP request requires a browser. Whoever has extracted your key calls the vendor, or your proxy, from `curl` or a script, and sends whatever `Origin` you want to see, or none at all. The check constrains cross-origin requests made by unmodified browsers; it says nothing about the client that is already holding your key.
 
 If a key can be extracted from what you send to the browser, it is compromised, regardless of what checks the request that carries it passes.
 
