@@ -3,6 +3,8 @@ title: Keeping keys safe
 description: Why a provider API key never belongs in the browser, and where it lives instead.
 ---
 
+A provider API key is a credential, and this page is about the one place it must never live: code that runs in a browser. It covers why that is a hard rule rather than a preference, what shape your architecture takes once you follow it, and how much of that shape Loquix's components and controllers already assume on your behalf.
+
 ## The rule
 
 A provider API key never reaches the browser. Anything you ship to a client — JavaScript source, a bundled config object, an environment variable exposed at build time — is readable by whoever is running that client. There is no way to hand a key to code running on a user's machine and keep it from that user.
@@ -31,6 +33,6 @@ This is why the split above costs you nothing extra to adopt: the provider inter
 
 The same applies to file uploads. An [upload provider](/docs/integration/uploads/)'s own interface comment is explicit that implementations must not embed secret keys client-side — operations that need one, such as deletion or signed uploads, belong behind a server-side proxy, not inside a provider shipped to the browser.
 
-## Proxy recipes
+Concrete, vendor-by-vendor recipes for putting a specific backend behind a proxy are not written yet — this page describes the architecture the recipes will implement, not the recipes themselves. The [HTTP adapter](/docs/integration/http-adapter/) is the piece that turns a proxy endpoint into a working provider once you have one, and a future revision of this page will point to per-vendor recipes once they exist.
 
-Concrete, vendor-by-vendor recipes for putting a specific backend behind a proxy aren't written yet. The [HTTP adapter](/docs/integration/http-adapter/) is the piece that turns a proxy endpoint into a working provider once you have one; this section will point to per-vendor recipes once they exist.
+Until then, the rule above and the shape it implies are what to build against: keep the key on a server you control, and let an agent or upload provider talk to that server instead of the vendor directly.
