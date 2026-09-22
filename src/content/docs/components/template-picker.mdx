@@ -1,0 +1,98 @@
+---
+title: Template Picker
+description: Modal dialog with a searchable, categorized grid of prompt templates.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Template component</p>
+
+`<loquix-template-picker>` is the whole template library in a modal: a search field and a grid of [Template Card](/docs/components/template-card/) elements, sectioned by category.
+
+<div class="component-meta">
+	<span>loquix-template-picker</span>
+	<span>native dialog element</span>
+	<span>search and categories</span>
+</div>
+
+## Preview
+
+<LivePreview label="Opening the picker" compact>
+	<loquix-template-picker
+		heading="Choose a template"
+		data-props='{"templates":[{"id":"summary","title":"Summarize a document","description":"Condense a long text into key points.","icon":"📄","category":"Writing","prompt":"Summarize this:"},{"id":"rewrite","title":"Rewrite for clarity","description":"Tighten wording without changing meaning.","icon":"✏️","category":"Writing","prompt":"Rewrite this for clarity:"},{"id":"review","title":"Review code","description":"Look for bugs and suggest improvements.","icon":"🔍","category":"Engineering","prompt":"Review this code:"},{"id":"tests","title":"Write tests","description":"Generate unit tests for a function.","icon":"🧪","category":"Engineering","prompt":"Write unit tests for:"}]}'
+	></loquix-template-picker>
+</LivePreview>
+
+The picker renders nothing until it is open — it has no trigger of its own. Set `open` from your own button.
+
+## Usage
+
+```js
+import '@loquix/core/define/define-template-picker';
+```
+
+```js
+const picker = document.querySelector('loquix-template-picker');
+
+picker.templates = await loadTemplates();
+
+openButton.addEventListener('click', () => {
+  picker.open = true;
+});
+
+picker.addEventListener('loquix-template-select', (event) => {
+  composer.value = event.detail.template.prompt;
+});
+```
+
+<Aside type="note" title="Selecting closes the picker">
+	Choosing a template closes the dialog and sets `open` back to `false` before `loquix-template-select` reaches you, and `loquix-template-picker-close` fires alongside it. There is no need to close it yourself, and no way to keep it open for a multi-select flow.
+</Aside>
+
+## Categories
+
+Cards are grouped by their `category` field. Leave `categories` unset and the order is derived from the templates; set it to pin an explicit order.
+
+```js
+picker.categories = ['Writing', 'Engineering', 'Research'];
+```
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `templates` | `templates` | `Template[]` | `[]` | Templates to display. See [the template object](/docs/components/template-card/#the-template-object). |
+| `open` | `open` | `boolean` | `false` | Whether the dialog is open. |
+| `heading` | `heading` | `string` | localized | Dialog heading. |
+| `searchable` | `searchable` | `boolean` | `true` | Shows the search field. |
+| `categories` | `categories` | `string[]` | `[]` | Explicit category order. Derived from the templates when omitted. |
+| `closeOnOutsideClick` | `close-on-outside-click` | `boolean` | `false` | Whether clicking the backdrop closes the dialog. Off by default, unlike [Search Dialog](/docs/components/search-dialog/). |
+
+## Events
+
+| Event | Detail | Description |
+| --- | --- | --- |
+| `loquix-template-picker-open` | — | Fired when the dialog opens. |
+| `loquix-template-picker-close` | — | Fired when the dialog closes. |
+| `loquix-template-select` | `{ template }` | Fired when a template is chosen. |
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `dialog` | The native `<dialog>` element. |
+| `search` | The search input. |
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-picker-max-width` | Dialog maximum width. |
+| `--loquix-picker-border-color` | Dialog border color. |
+| `--loquix-picker-border-radius` | Dialog border radius. |
+| `--loquix-picker-bg` | Dialog background. |
+| `--loquix-picker-backdrop` | Backdrop overlay color. |
+| `--loquix-picker-gap` | Grid gap. |
+| `--loquix-picker-card-min-width` | Minimum card width in the grid. |

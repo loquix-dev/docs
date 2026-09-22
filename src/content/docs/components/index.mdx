@@ -7,7 +7,7 @@ sidebar:
 
 import { Aside, Card, CardGrid } from '@astrojs/starlight/components';
 
-This documentation targets `@loquix/core` **0.4.1**. Reference pages cover the chat, message, action, reasoning and trust, search, attachment, feedback, onboarding, and configuration components. The remaining configuration, template, and infrastructure components are being added next.
+This site documents every component `@loquix/core` **0.4.1** exports — 53 in all, across chat, messages, actions, reasoning and trust, search, attachments, feedback, onboarding, configuration, templates, and infrastructure.
 
 ## Start with these
 
@@ -112,14 +112,28 @@ This documentation targets `@loquix/core` **0.4.1**. Reference pages cover the c
 | --- | --- |
 | [Mode Selector](/docs/components/mode-selector/) | Chat, research, build, or custom modes. |
 | [Model Selector](/docs/components/model-selector/) | LLM catalog, capabilities, and cost metadata. |
+| [Dropdown Select](/docs/components/dropdown-select/) | Rich select with search, groups, and submenus. |
+| [Parameter Panel](/docs/components/parameter-panel/) | Sliders, toggles, and presets for model parameters. |
+| [Filter Bar](/docs/components/filter-bar/) | Toggleable filter chips and a negative prompt. |
 
-## Available in the package
+### Templates and guidance
 
-`@loquix/core` also exports the following component families. They are available in version 0.4.1, while full reference pages are scheduled after the first documentation release:
+| Component | Use it for |
+| --- | --- |
+| [Template Card](/docs/components/template-card/) | A single prompt template as a card. |
+| [Template Picker](/docs/components/template-picker/) | Searchable modal grid of templates. |
+| [Example Gallery](/docs/components/example-gallery/) | Browsable example prompts by category. |
+| [Nudge Banner](/docs/components/nudge-banner/) | Contextual tip, info, or warning. |
 
-- **Configuration:** Dropdown Select, Parameter Panel, Filter Bar
-- **Templates and guidance:** Template Card, Template Picker, Example Gallery, Nudge Banner
-- **Infrastructure:** Scroll Anchor
+### Infrastructure
+
+| Component | Use it for |
+| --- | --- |
+| [Scroll Anchor](/docs/components/scroll-anchor/) | Return-to-newest button for a custom scroll container. |
+
+## Complete coverage
+
+Every component `@loquix/core` 0.4.1 exports now has a reference page. If you find one missing, it is a gap in this site rather than a deliberate omission — please report it.
 
 <Aside type="note" title="Coverage, not stability">
 	“Documented” describes reference coverage on this website. It is not a separate stability promise. Use the installed package version and its release notes as the source of truth for API compatibility.

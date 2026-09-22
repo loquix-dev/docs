@@ -1,0 +1,108 @@
+---
+title: Nudge Banner
+description: Contextual tip or warning banner with optional dismiss and action.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Guidance component</p>
+
+`<loquix-nudge-banner>` carries a short contextual message — a tip about a feature the user has not tried, a note about a limit they are approaching. It can be dismissed and can carry one call to action.
+
+<div class="component-meta">
+	<span>loquix-nudge-banner</span>
+	<span>three variants</span>
+	<span>dismiss and action events</span>
+</div>
+
+## Preview
+
+<LivePreview label="Variants">
+	<div class="stack-preview">
+		<loquix-nudge-banner nudge-id="tip-shortcuts" variant="tip" icon="💡" action-label="Show shortcuts">Press ⌘K from anywhere to search.</loquix-nudge-banner>
+		<loquix-nudge-banner nudge-id="info-indexed" variant="info" icon="ℹ️">Documents were last indexed three days ago.</loquix-nudge-banner>
+		<loquix-nudge-banner nudge-id="warn-quota" variant="warning" icon="⚠️" action-label="Upgrade">You have used 90% of this month's quota.</loquix-nudge-banner>
+	</div>
+</LivePreview>
+
+## Usage
+
+```js
+import '@loquix/core/define/define-nudge-banner';
+```
+
+```html
+<loquix-nudge-banner nudge-id="tip-shortcuts" variant="tip" icon="💡" action-label="Show shortcuts">
+  Press ⌘K from anywhere to search.
+</loquix-nudge-banner>
+```
+
+```js
+const nudge = document.querySelector('loquix-nudge-banner');
+
+nudge.addEventListener('loquix-nudge-dismiss', (event) => {
+  rememberDismissed(event.detail.nudgeId);
+});
+
+nudge.addEventListener('loquix-nudge-action', () => {
+  openShortcutHelp();
+});
+```
+
+<Aside type="caution" title="Dismissal is not remembered for you">
+	Dismissing hides the banner for the rest of the page's life, but the component keeps no record of it. `nudgeId` exists so you can key your own storage by it — without that, a dismissed nudge returns on the next page load.
+</Aside>
+
+## Variants
+
+| Variant | Use it for |
+| --- | --- |
+| `tip` | Something the user could try. The default. |
+| `info` | Neutral context about the current state. |
+| `warning` | Something that needs attention before it becomes a problem. |
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `nudgeId` | `nudge-id` | `string` | `''` | Identifier echoed in the dismiss event. |
+| `variant` | `variant` | `'info' \| 'tip' \| 'warning'` | `'tip'` | Visual variant. |
+| `dismissible` | `dismissible` | `boolean` | `true` | Whether the dismiss button is shown. |
+| `actionLabel` | `action-label` | `string` | `''` | Label for the action button. Empty means no button. |
+| `icon` | `icon` | `string` | `''` | Emoji or text icon. |
+
+## Events
+
+| Event | Detail | Description |
+| --- | --- | --- |
+| `loquix-nudge-dismiss` | `{ nudgeId }` | Fired when the banner is dismissed. |
+| `loquix-nudge-action` | `{ nudgeId, action }` | Fired when the action button is clicked. `action` is the button's label. |
+
+## Slots
+
+| Slot | Purpose |
+| --- | --- |
+| default | The banner text. |
+| `icon` | Custom icon, overriding the `icon` property. |
+| `action` | Custom action control, overriding `actionLabel`. |
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `banner` | The banner container. |
+| `dismiss` | The dismiss button. |
+| `action-button` | The action button. |
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-nudge-bg` | Background color. |
+| `--loquix-nudge-color` | Text color. |
+| `--loquix-nudge-border-color` | Border color. |
+| `--loquix-nudge-border-radius` | Border radius. |
+| `--loquix-nudge-padding` | Padding. |
+| `--loquix-nudge-gap` | Gap between elements. |
+| `--loquix-nudge-font-size` | Font size. |

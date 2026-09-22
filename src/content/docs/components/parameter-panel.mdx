@@ -1,0 +1,127 @@
+---
+title: Parameter Panel
+description: Sliders, toggles, selects, and number inputs for tuning model parameters, with presets.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Configuration component</p>
+
+`<loquix-parameter-panel>` exposes the knobs behind a generation — temperature, top-p, max tokens, whatever your model takes. You describe the parameters; it renders the right control for each and reports changes twice: continuously while dragging, and once when the value settles.
+
+<div class="component-meta">
+	<span>loquix-parameter-panel</span>
+	<span>four control types</span>
+	<span>live and committed events</span>
+</div>
+
+## Preview
+
+<LivePreview label="Model parameters" tall>
+	<loquix-parameter-panel
+		active-preset="balanced"
+		data-props='{"parameters":[{"id":"temperature","label":"Temperature","type":"range","min":0,"max":2,"step":0.1,"default":0.7,"description":"Higher values make output more random."},{"id":"max_tokens","label":"Max tokens","type":"number","min":1,"max":8192,"step":1,"default":2048},{"id":"stream","label":"Stream response","type":"toggle","default":true},{"id":"format","label":"Response format","type":"select","default":"text","options":[{"value":"text","label":"Plain text"},{"value":"json","label":"JSON"}]}],"values":{"temperature":0.7,"max_tokens":2048,"stream":true,"format":"text"},"presets":[{"id":"precise","label":"Precise","values":{"temperature":0.2}},{"id":"balanced","label":"Balanced","values":{"temperature":0.7}},{"id":"creative","label":"Creative","values":{"temperature":1.4}}]}'
+	></loquix-parameter-panel>
+</LivePreview>
+
+## Usage
+
+```js
+import '@loquix/core/define/define-parameter-panel';
+```
+
+```js
+const panel = document.querySelector('loquix-parameter-panel');
+
+panel.parameters = [
+  { id: 'temperature', label: 'Temperature', type: 'range', min: 0, max: 2, step: 0.1, default: 0.7 },
+  { id: 'stream', label: 'Stream response', type: 'toggle', default: true },
+];
+
+panel.values = { temperature: 0.7, stream: true };
+```
+
+## Two change events
+
+`loquix-parameter-change` fires on every tick while a slider is being dragged. `loquix-parameter-commit` fires once, when the user lets go.
+
+```js
+// Cheap: update a live preview on every tick.
+panel.addEventListener('loquix-parameter-change', (event) => {
+  previewTemperature(event.detail.value);
+});
+
+// Expensive: persist only the settled value.
+panel.addEventListener('loquix-parameter-commit', (event) => {
+  saveSettings(event.detail.values);
+});
+```
+
+<Aside type="caution" title="Do not persist on every tick">
+	Dragging one slider across its range fires `loquix-parameter-change` dozens of times. Sending each of those to a server is the mistake this split exists to prevent — use `commit` for anything with a cost.
+</Aside>
+
+## The parameter object
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | `string` | yes | Identifier, used as the key in `values`. |
+| `label` | `string` | yes | Human-readable label. |
+| `type` | `'range' \| 'toggle' \| 'select' \| 'number'` | yes | Which control to render. |
+| `min` | `number` | no | Minimum, for `range` and `number`. |
+| `max` | `number` | no | Maximum, for `range` and `number`. |
+| `step` | `number` | no | Step increment, for `range` and `number`. |
+| `default` | `unknown` | no | Default value. |
+| `description` | `string` | no | Explanatory text, hidden in compact mode. |
+| `advanced` | `boolean` | no | Hides the parameter until `showAdvanced` is set. |
+| `options` | `{ value, label }[]` | no | Choices, required for `select`. |
+
+## Presets
+
+A preset is a named bundle of values. Selecting one applies its values and fires `loquix-preset-change`.
+
+<Aside type="caution" title="In 0.4.1 a preset replaces every value">
+	Selecting a preset overwrites the whole `values` map with the preset's own, so any parameter the preset does not name loses its current value and falls back to its default. Until this is fixed, give every preset a complete set of values — or reapply the missing ones in your `loquix-preset-change` handler.
+</Aside>
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | `string` | yes | Preset identifier. |
+| `label` | `string` | yes | Display name. |
+| `values` | `Record<string, unknown>` | yes | Parameter id to value. |
+| `description` | `string` | no | Short explanation. |
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `parameters` | `parameters` | `ParameterDef[]` | `[]` | Parameter definitions. |
+| `values` | `values` | `Record<string, unknown>` | `{}` | Current values, keyed by parameter id. |
+| `presets` | `presets` | `ParameterPreset[]` | `[]` | Available presets. |
+| `activePreset` | `active-preset` | `string` | `''` | Selected preset id. |
+| `compact` | `compact` | `boolean` | `false` | Hides descriptions and tightens spacing. |
+| `showAdvanced` | `show-advanced` | `boolean` | `false` | Reveals parameters marked `advanced`. |
+| `disabled` | `disabled` | `boolean` | `false` | Disables every control. |
+
+## Events
+
+| Event | Detail | Description |
+| --- | --- | --- |
+| `loquix-parameter-change` | `{ id, value, values }` | Fired on every input tick, including mid-drag. |
+| `loquix-parameter-commit` | `{ id, value, values }` | Fired once when a value settles. |
+| `loquix-preset-change` | `{ preset }` | Fired when a preset is selected. `preset` is the preset's id string, not the preset object. |
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `panel` | The panel container. |
+| `presets` | The presets row. |
+| `preset` | A preset button. |
+| `param` | A parameter row. |
+| `range` | A range slider. |
+| `toggle-btn` | A toggle switch. |
+| `number-input` | A number field. |
+| `select-input` | A select control. |
+| `advanced-toggle` | The show/hide advanced control. |

@@ -1,0 +1,107 @@
+---
+title: Example Gallery
+description: Categorized grid, list, or carousel of example prompts.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Template component</p>
+
+`<loquix-example-gallery>` shows what the assistant can do, as browsable example prompts. It suits an empty state or a help panel — somewhere a user is looking for ideas rather than picking from a library they already know.
+
+<div class="component-meta">
+	<span>loquix-example-gallery</span>
+	<span>grid, list, or carousel</span>
+	<span>grouped by category</span>
+</div>
+
+## Preview
+
+<LivePreview label="Example prompts" tall>
+	<loquix-example-gallery
+		heading="Try one of these"
+		columns="2"
+		data-props='{"items":[{"id":"explain","title":"Explain a concept","description":"Break down a topic step by step.","icon":"💡","category":"Learning","prompt":"Explain how HTTP caching works."},{"id":"compare","title":"Compare options","description":"Weigh two approaches side by side.","icon":"⚖️","category":"Learning","prompt":"Compare REST and GraphQL for a mobile app."},{"id":"debug","title":"Debug an error","description":"Track down why something fails.","icon":"🐞","category":"Engineering","prompt":"Why does this stack trace point to a null reference?"},{"id":"refactor","title":"Refactor code","description":"Simplify without changing behaviour.","icon":"🧹","category":"Engineering","prompt":"Refactor this function to reduce nesting."}]}'
+	></loquix-example-gallery>
+</LivePreview>
+
+## Usage
+
+```js
+import '@loquix/core/define/define-example-gallery';
+```
+
+```js
+const gallery = document.querySelector('loquix-example-gallery');
+
+gallery.items = examples;
+
+gallery.addEventListener('loquix-gallery-select', (event) => {
+  composer.value = event.detail.item.prompt;
+});
+```
+
+## The gallery item
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | `string` | yes | Identifier. |
+| `title` | `string` | yes | Item title. |
+| `prompt` | `string` | yes | The prompt text the item inserts. |
+| `description` | `string` | no | Short explanation. |
+| `icon` | `string` | no | Icon or emoji. |
+| `category` | `string` | no | Group heading. |
+| `metadata` | `Record<string, unknown>` | no | Anything extra your app needs. |
+
+The shape matches [the template object](/docs/components/template-card/#the-template-object), so the same data can feed both.
+
+## Variants
+
+| Variant | Layout |
+| --- | --- |
+| `grid` | Cards in columns. The default. |
+| `list` | Stacked rows, better in a narrow panel. |
+| `carousel` | One horizontal scrolling row. |
+
+`columns` applies to the grid variant only.
+
+<Aside type="caution" title="In 0.4.1 the column count is not overridable in CSS">
+	The component writes `--loquix-gallery-columns` inline on the grid, which beats any rule you can write from outside. Setting it on the host, or in a stylesheet, has no effect — change the `columns` property instead, from a `matchMedia` listener if you need it to respond to viewport width.
+</Aside>
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `items` | `items` | `GalleryItem[]` | `[]` | Items to display. |
+| `variant` | `variant` | `'grid' \| 'list' \| 'carousel'` | `'grid'` | Display variant. |
+| `columns` | `columns` | `number` | `3` | Grid column count. |
+| `categories` | `categories` | `string[]` | `[]` | Explicit category order. Derived from the items when omitted. |
+| `heading` | `heading` | `string` | `''` | Optional heading above the gallery. |
+
+## Events
+
+| Event | Detail | Description |
+| --- | --- | --- |
+| `loquix-gallery-select` | `{ item }` | Fired when an item is clicked. |
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `item` | An individual gallery item button. |
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-gallery-gap` | Gap between items. |
+| `--loquix-gallery-columns` | Grid column count. See the caution above — in 0.4.1 this cannot be overridden from outside. |
+| `--loquix-gallery-heading-font-size` | Heading font size. |
+| `--loquix-gallery-item-padding` | Item padding. |
+| `--loquix-gallery-item-border-color` | Item border color. |
+| `--loquix-gallery-item-border-radius` | Item border radius. |
+| `--loquix-gallery-item-bg` | Item background. |
+
+For short prompt suggestions rather than browsable examples, [Suggestion Chips](/docs/components/suggestion-chips/) is the lighter choice.

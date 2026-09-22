@@ -1,0 +1,101 @@
+---
+title: Template Card
+description: Single prompt-template card, used standalone or inside the picker.
+---
+
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Template component</p>
+
+`<loquix-template-card>` presents one prompt template — a title, a short description, an icon — as a clickable card. Use it directly for a handful of favourites, or let [Template Picker](/docs/components/template-picker/) lay out the whole library.
+
+<div class="component-meta">
+	<span>loquix-template-card</span>
+	<span>standalone or in a grid</span>
+	<span>selectable</span>
+</div>
+
+## Preview
+
+<LivePreview label="Template cards">
+	<div class="card-row">
+		<loquix-template-card data-props='{"template":{"id":"summary","title":"Summarize a document","description":"Condense a long text into key points.","icon":"📄","category":"Writing","prompt":"Summarize the following document in five bullet points:"}}'></loquix-template-card>
+		<loquix-template-card selected data-props='{"template":{"id":"review","title":"Review code","description":"Look for bugs and suggest improvements.","icon":"🔍","category":"Engineering","prompt":"Review the following code and list any bugs:"}}'></loquix-template-card>
+	</div>
+</LivePreview>
+
+The second card is selected.
+
+## Usage
+
+```js
+import '@loquix/core/define/define-template-card';
+```
+
+```js
+const card = document.querySelector('loquix-template-card');
+
+card.template = {
+  id: 'summary',
+  title: 'Summarize a document',
+  description: 'Condense a long text into key points.',
+  icon: '📄',
+  prompt: 'Summarize the following document in five bullet points:',
+};
+
+card.addEventListener('loquix-template-select', (event) => {
+  composer.value = event.detail.template.prompt;
+});
+```
+
+## The template object
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | `string` | yes | Identifier. |
+| `title` | `string` | yes | Card title. |
+| `prompt` | `string` | yes | The prompt text the template inserts. |
+| `description` | `string` | no | Short explanation under the title. |
+| `icon` | `string` | no | Icon or emoji. |
+| `category` | `string` | no | Group used by the picker to section the grid. |
+| `metadata` | `Record<string, unknown>` | no | Anything extra your app needs to carry. |
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `template` | `template` | `Template` | empty template | The template to display. |
+| `selected` | `selected` | `boolean` | `false` | Whether the card reads as selected. |
+
+## Events
+
+| Event | Detail | Description |
+| --- | --- | --- |
+| `loquix-template-select` | `{ template }` | Fired when the card is clicked. |
+
+## Slots
+
+| Slot | Purpose |
+| --- | --- |
+| `icon` | Replaces the card icon. |
+| `footer` | Extra content below the description. |
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `card` | The card container button. |
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-template-card-padding` | Card padding. |
+| `--loquix-template-card-border-color` | Border color. |
+| `--loquix-template-card-border-radius` | Border radius. |
+| `--loquix-template-card-bg` | Background. |
+| `--loquix-template-card-hover-border-color` | Hover border color. |
+| `--loquix-template-card-selected-bg` | Background when selected. |
+| `--loquix-template-card-title-font-size` | Title font size. |
+| `--loquix-template-card-desc-font-size` | Description font size. |
+| `--loquix-template-card-desc-color` | Description color. |

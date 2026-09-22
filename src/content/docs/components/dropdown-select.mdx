@@ -1,0 +1,126 @@
+---
+title: Dropdown Select
+description: Rich select with search, groups, descriptions, icons, submenus, and keyboard navigation.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Configuration component</p>
+
+`<loquix-dropdown-select>` is the general-purpose select behind the library's pickers. Beyond a plain list it handles search, grouped headers, per-option descriptions and icons, separators, actions, and nested submenus.
+
+<div class="component-meta">
+	<span>loquix-dropdown-select</span>
+	<span>searchable and grouped</span>
+	<span>keyboard navigable</span>
+</div>
+
+## Preview
+
+<LivePreview label="Grouped options" tall>
+	<loquix-dropdown-select
+		open
+		searchable
+		value="main"
+		placement="bottom"
+		data-props='{"options":[{"value":"main","label":"main","description":"Default branch","icon":"🌿","group":"Branches"},{"value":"develop","label":"develop","description":"Integration branch","icon":"🌿","group":"Branches"},{"value":"sep","type":"separator"},{"value":"release","label":"release/2.1","icon":"🏷️","group":"Tags","badge":"+12 -3"},{"value":"new","label":"Create new branch","type":"action","icon":"➕"}]}'
+	></loquix-dropdown-select>
+</LivePreview>
+
+Shown open so the panel, search field, group headers, and badge are visible.
+
+## Usage
+
+```js
+import '@loquix/core/define/define-dropdown-select';
+```
+
+```js
+const select = document.querySelector('loquix-dropdown-select');
+
+select.options = [
+  { value: 'main', label: 'main', description: 'Default branch', group: 'Branches' },
+  { value: 'develop', label: 'develop', group: 'Branches' },
+];
+
+select.addEventListener('loquix-select-change', (event) => {
+  applySelection(event.detail);
+});
+```
+
+## The option object
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `value` | `string` | yes | Unique value for the option. |
+| `label` | `string` | yes | Primary text. |
+| `description` | `string` | no | Secondary line under the label. |
+| `icon` | `string` | no | Icon or emoji before the label. |
+| `hint` | `string` | no | Tooltip text on hover. |
+| `group` | `string` | no | Group header the option sits under. |
+| `type` | `'option' \| 'action' \| 'separator'` | no | Regular option, clickable action, or a visual divider. |
+| `badge` | `string` | no | Trailing badge text, such as `+12 -3`. |
+| `external` | `boolean` | no | Shows an external-link icon on the right. |
+| `disabled` | `boolean` | no | Makes the option unselectable. |
+| `children` | `SelectOption[]` | no | Nested options for a submenu. Setting this enables the submenu arrow automatically. |
+
+<Aside type="note" title="Separators still need a value">
+	Every entry is keyed by `value`, including separators. Give each one a unique throwaway value rather than repeating an empty string.
+</Aside>
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `options` | `options` | `SelectOption[]` | `[]` | The options to render. |
+| `value` | `value` | `string` | `''` | Selected value. |
+| `placeholder` | `placeholder` | `string` | localized | Trigger text when nothing is selected. |
+| `searchable` | `searchable` | `boolean` | `false` | Shows a search field above the list. |
+| `searchPlaceholder` | `search-placeholder` | `string` | localized | Placeholder for the search field. |
+| `open` | `open` | `boolean` | `false` | Whether the panel is open. |
+| `placement` | `placement` | `'top' \| 'bottom'` | `'top'` | Preferred panel side. Floating UI flips it when space is tight. |
+| `noChevron` | `no-chevron` | `boolean` | `false` | Hides the chevron on the trigger. |
+| `disabled` | `disabled` | `boolean` | `false` | Disables the control. |
+
+## Events
+
+| Event | Detail | Description |
+| --- | --- | --- |
+| `loquix-select-change` | `{ value, option }` | Fired when a value is selected. Carries both the value string and the full option object. Selecting also closes the panel. |
+
+## Slots
+
+| Slot | Purpose |
+| --- | --- |
+| `footer` | Content pinned to the bottom of the panel, such as a "Create new" action. |
+| `trigger-icon` | Replaces the icon on the trigger button. |
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `trigger` | The trigger button. |
+| `panel` | The dropdown panel. |
+| `search` | Search input wrapper. |
+| `option` | An option item. |
+| `footer` | The footer slot area. |
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-dropdown-trigger-padding` | Trigger padding. |
+| `--loquix-dropdown-trigger-radius` | Trigger border radius. |
+| `--loquix-dropdown-trigger-bg` | Trigger background. |
+| `--loquix-dropdown-trigger-color` | Trigger text color. |
+| `--loquix-dropdown-panel-bg` | Panel background. |
+| `--loquix-dropdown-panel-radius` | Panel border radius. |
+| `--loquix-dropdown-panel-border-color` | Panel border color. |
+| `--loquix-dropdown-min-width` | Minimum panel width. |
+| `--loquix-dropdown-max-height` | Maximum height of the option list. |
+| `--loquix-dropdown-option-color` | Option text color. |
+| `--loquix-dropdown-option-label-color` | Option label color. |
+| `--loquix-dropdown-option-desc-color` | Option description color. |
+
+For model and mode selection specifically, [Model Selector](/docs/components/model-selector/) and [Mode Selector](/docs/components/mode-selector/) wrap this with the right shape of data already in place.

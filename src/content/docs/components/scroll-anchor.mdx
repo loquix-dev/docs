@@ -1,0 +1,84 @@
+---
+title: Scroll Anchor
+description: Floating button that returns the reader to the newest message.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Infrastructure component</p>
+
+`<loquix-scroll-anchor>` is the small floating button that appears once the reader has scrolled away from the bottom of a conversation. It renders the button and reports the click; the scrolling itself belongs to whatever owns the list.
+
+The host is positioned `absolute` against `bottom` and `right`, so it anchors to the nearest positioned ancestor. Give your scroll container `position: relative`, or the button drifts to whatever ancestor happens to be positioned.
+
+<div class="component-meta">
+	<span>loquix-scroll-anchor</span>
+	<span>visibility is controlled</span>
+	<span>reports, does not scroll</span>
+</div>
+
+## Preview
+
+<LivePreview label="Visible state" compact>
+	<div class="action-row">
+		<loquix-scroll-anchor visible label="Jump to newest message"></loquix-scroll-anchor>
+	</div>
+</LivePreview>
+
+Shown with `visible` set. Without it the button fades out and stops receiving clicks; because the host is absolutely positioned it never takes part in layout either way.
+
+## Usage
+
+```js
+import '@loquix/core/define/define-scroll-anchor';
+```
+
+```html
+<loquix-scroll-anchor visible label="Jump to newest message"></loquix-scroll-anchor>
+```
+
+```js
+const anchor = document.querySelector('loquix-scroll-anchor');
+
+anchor.addEventListener('loquix-scroll-anchor-click', () => {
+  list.scrollTo({ top: list.scrollHeight, behavior: 'smooth' });
+});
+```
+
+<Aside type="note" title="Two things it does not do">
+	It neither detects scroll position nor scrolls anything. Set `visible` from your own scroll listener, and do the scrolling in the click handler. [Message List](/docs/components/message-list/) wires both sides for you through its `showScrollAnchor` option — prefer that inside a conversation, and use this component directly only for a custom scroll container.
+</Aside>
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `visible` | `visible` | `boolean` | `false` | Whether the button is shown. Controlled by the parent. |
+| `label` | `label` | `string` | localized | Accessible label for the button. |
+
+## Events
+
+| Event | Detail | Description |
+| --- | --- | --- |
+| `loquix-scroll-anchor-click` | — | Fired when the button is clicked. |
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `button` | The button element. |
+
+## CSS custom properties
+
+| Variable | Purpose |
+| --- | --- |
+| `--loquix-scroll-anchor-icon` | Custom icon as a `mask-image` URL. Monochrome — it inherits the button color. |
+| `--loquix-scroll-anchor-icon-size` | Icon size. |
+| `--loquix-scroll-anchor-size` | Button size. |
+| `--loquix-scroll-anchor-bg` | Button background. |
+| `--loquix-scroll-anchor-color` | Icon color. |
+| `--loquix-scroll-anchor-shadow` | Button shadow. |
+| `--loquix-scroll-anchor-border-radius` | Button border radius. |
+| `--loquix-scroll-anchor-bottom` | Distance from the bottom. |
+| `--loquix-scroll-anchor-right` | Distance from the right. |

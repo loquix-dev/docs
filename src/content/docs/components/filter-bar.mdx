@@ -1,0 +1,89 @@
+---
+title: Filter Bar
+description: Row of toggleable filter chips, with an optional negative prompt field.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import LivePreview from '../../../components/LivePreview.astro';
+
+<p class="component-kicker">Configuration component</p>
+
+`<loquix-filter-bar>` is a horizontal row of chips the user toggles on and off — styles, formats, scopes, whatever narrows a generation. It can also carry a negative prompt field for saying what to leave out.
+
+<div class="component-meta">
+	<span>loquix-filter-bar</span>
+	<span>multi-select chips</span>
+	<span>optional negative prompt</span>
+</div>
+
+## Preview
+
+<LivePreview label="Filters with a negative prompt">
+	<loquix-filter-bar
+		show-negative-prompt
+		negative-prompt="text, watermarks"
+		data-props='{"filters":[{"id":"photo","label":"Photographic","icon":"📷","group":"Style"},{"id":"illustration","label":"Illustration","icon":"🎨","group":"Style"},{"id":"3d","label":"3D render","icon":"🧊","group":"Style"},{"id":"wide","label":"Widescreen","icon":"🖥️","group":"Format"}],"values":["photo","wide"]}'
+	></loquix-filter-bar>
+</LivePreview>
+
+Two chips active, and a negative prompt listing what to avoid.
+
+## Usage
+
+```js
+import '@loquix/core/define/define-filter-bar';
+```
+
+```js
+const bar = document.querySelector('loquix-filter-bar');
+
+bar.filters = [
+  { id: 'photo', label: 'Photographic', icon: '📷', group: 'Style' },
+  { id: 'wide', label: 'Widescreen', icon: '🖥️', group: 'Format' },
+];
+
+bar.addEventListener('loquix-filter-change', (event) => {
+  const { values, negativePrompt } = event.detail;
+
+  applyFilters(values, negativePrompt);
+});
+```
+
+One event covers both halves — toggling a chip and editing the negative prompt each fire `loquix-filter-change` with the current state of both.
+
+## The filter object
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | `string` | yes | Identifier, the value that appears in `values`. |
+| `label` | `string` | yes | Chip text. |
+| `icon` | `string` | no | Icon or emoji before the label. |
+| `group` | `string` | no | Group name, used to cluster chips visually. |
+
+<Aside type="note" title="Selection is multiple, and yours to constrain">
+	Toggling a chip updates `values` for you, so the chip states are handled. But filters are independent — if only one in a group should be active at a time, enforce that in your `loquix-filter-change` handler.
+</Aside>
+
+## Properties
+
+| Property | Attribute | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `filters` | `filters` | `FilterOption[]` | `[]` | Available filters. |
+| `values` | `values` | `string[]` | `[]` | Ids of the active filters. Updated by the component as chips are toggled. |
+| `showNegativePrompt` | `show-negative-prompt` | `boolean` | `false` | Shows the negative prompt field. |
+| `negativePrompt` | `negative-prompt` | `string` | `''` | Negative prompt text. |
+| `disabled` | `disabled` | `boolean` | `false` | Disables every control. |
+
+## Events
+
+| Event | Detail | Description |
+| --- | --- | --- |
+| `loquix-filter-change` | `{ values, negativePrompt? }` | Fired when a chip is toggled or the negative prompt changes. |
+
+## CSS parts
+
+| Part | Purpose |
+| --- | --- |
+| `bar` | The chip container. |
+| `filter` | A single filter chip. |
+| `negative-prompt` | The negative prompt section. |

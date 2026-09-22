@@ -232,6 +232,9 @@ header.header {
 .loquix-preview__canvas {
 	display: grid;
 	align-items: center;
+	/* Anchors absolutely positioned components, such as loquix-scroll-anchor,
+	   to the preview frame instead of letting them escape up the tree. */
+	position: relative;
 	min-height: 15rem;
 	padding: clamp(1.2rem, 5vw, 3.5rem);
 	background:
@@ -303,6 +306,19 @@ header.header {
 	text-align: left;
 }
 
+.loquix-preview .card-row {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 0.75rem;
+	width: min(100%, 40rem);
+	margin-inline: auto;
+}
+
+.loquix-preview .card-row > * {
+	margin-block: 0;
+}
+
 .loquix-preview .stack-preview {
 	display: grid;
 	gap: 0.6rem;
@@ -327,7 +343,11 @@ header.header {
 .loquix-preview loquix-search-dialog,
 .loquix-preview loquix-attachment-panel,
 .loquix-preview loquix-correction-input,
-.loquix-preview loquix-feedback-form {
+.loquix-preview loquix-feedback-form,
+.loquix-preview loquix-parameter-panel,
+.loquix-preview loquix-filter-bar,
+.loquix-preview loquix-example-gallery,
+.loquix-preview loquix-nudge-banner {
 	width: min(100%, 40rem);
 	margin-inline: auto;
 }
