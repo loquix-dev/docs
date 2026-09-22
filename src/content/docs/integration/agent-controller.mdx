@@ -71,7 +71,7 @@ The third constructor argument configures the controller. Everything is optional
 
 `model`, `params`, and `systemPrompt` are passed straight through to the provider's `send()` as part of `AgentSendOptions` on every call; see the [agent provider page](/docs/integration/agent-provider/) for how a provider is expected to use them.
 
-`maxMessageLength` rejects an individual message whose content is too long; `maxMessages` rejects a `send()` that would push the conversation over the cap, counting both the new user message and the assistant response it will produce. Both throw synchronously from `send()`, before any request is made.
+`maxMessageLength` rejects an individual message whose content is too long; `maxMessages` rejects a `send()` that would push the conversation over the cap, counting both the new user message and the assistant response it will produce. Both reject the promise `send()` returns, before any request is made. `send()` is `async`, so the error never arrives as a synchronous exception — `await` the call, or attach a `.catch()`, to see it.
 
 ### `sendTimeout`
 
