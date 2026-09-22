@@ -61,6 +61,7 @@ export default defineConfig({
 						{ label: 'Overview', slug: 'integration' },
 						{ label: 'Agent provider', slug: 'integration/agent-provider' },
 						{ label: 'Agent controller', slug: 'integration/agent-controller' },
+						{ label: 'File uploads', slug: 'integration/uploads' },
 					],
 				},
 				{
