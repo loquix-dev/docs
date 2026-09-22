@@ -81,7 +81,7 @@ interface AgentSendOptions {
 }
 ```
 
-- **`signal`** — the controller always passes one. It combines its own internal abort with its send timeout into a single signal, so forwarding it to `fetch` covers both a stop and the timeout in one place — it bounds the entire exchange, not just the wait for the stream to start. That internal abort fires from more than an explicit `abort()` call: `reset()` aborts (it calls `abort()` internally), `setProvider()` aborts if the controller is not `idle` or `complete`, and — easy to miss — `hostDisconnected()` aborts too, so removing the host element from the DOM cancels an in-flight send or stream, the same way it does for [`UploadController`](/docs/integration/uploads/).
+- **`signal`** — the controller always passes one. It combines its own internal abort with its send timeout into a single signal. Forwarding it to `fetch` covers both a stop and the timeout in one place, so it bounds the entire exchange, not just the wait for the stream to start. That internal abort fires from more than an explicit `abort()` call. `reset()` aborts, since it calls `abort()` internally. `setProvider()` aborts if the controller is not `idle` or `complete`. And — easy to miss — `hostDisconnected()` aborts too, so removing the host element from the DOM cancels an in-flight send or stream, the same way it does for [`UploadController`](/docs/integration/uploads/).
 - **`model`** — the model identifier configured on the controller, if any.
 - **`params`** — inference parameters such as `temperature`, `top_p`, or `max_tokens`, passed through as-is.
 - **`systemPrompt`** — a system prompt override, if the controller was configured with one.

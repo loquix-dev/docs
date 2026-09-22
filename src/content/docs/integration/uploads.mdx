@@ -89,7 +89,7 @@ As a `ReactiveController`, it implements `hostConnected()` and `hostDisconnected
 | `error` | Nothing is active, queued, or retrying, and at least one file ended in an error. |
 | `complete` | Nothing is active, queued, or retrying, nothing errored, and at least one file succeeded. |
 
-Unlike the chat controller, there is no `paused` state — uploads either run, or they do not.
+Unlike the chat controller, there is no `paused` state — uploads either run or they do not.
 
 ## Methods
 
@@ -111,7 +111,7 @@ Unlike the chat controller, there is no `paused` state — uploads either run, o
 | Property | Type | Description |
 | --- | --- | --- |
 | `state` | `UploadState` | The current state, one of the four values above. |
-| `results` | `ReadonlyMap<string, UploadResult>` | Completed upload results, keyed by attachment ID. Not cleared by `abortAll()`. `reset()` clears every entry; `retry()` clears just the one entry for the attachment it re-queues. |
+| `results` | `ReadonlyMap<string, UploadResult>` | Completed upload results, keyed by attachment ID. Not cleared by `abortAll()`. `reset()` clears every entry. `retry()` also deletes the entry for its one attachment, though in the ordinary flow there is nothing there to delete — that only matters if the same attachment ID was previously completed, re-added, and failed the second time around. |
 | `activeCount` | `number` | Number of uploads currently in flight. |
 | `queuedCount` | `number` | Number of uploads waiting for a concurrency slot. |
 
