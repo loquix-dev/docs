@@ -7,6 +7,8 @@ import { Aside, Card, CardGrid } from '@astrojs/starlight/components';
 
 Loquix components communicate with standard attributes, DOM properties, methods, and custom events. Your application remains responsible for conversations, requests, persistence, and provider credentials.
 
+This page covers that DOM contract — the attributes, properties, and events every component exposes — independent of how you drive them. The [Integration](/docs/integration/) section covers `AgentController`, the piece that now exists to drive the chat seam of that contract for you, so you do not have to wire `loquix-submit` to a raw `fetch` call by hand the way the example below still does.
+
 ## The data flow
 
 <CardGrid>

@@ -26,7 +26,19 @@ interface AgentProvider {
 
 - **`name`** — a human-readable label for the provider (for example `"Claude API"` or `"my-ai"`). It is not used for routing; it exists for logging and for display.
 - **`send(messages, options)`** — the one required method. It receives the full conversation history and returns a promise for an `AgentResponse`. The controller awaits this promise once per send; everything after that point is the stream inside the response.
-- **`listModels()`** — optional. Implement it to populate `<loquix-model-selector>` dynamically from your backend's catalog. If you omit it, drive the selector from static configuration instead.
+- **`listModels()`** — optional, and a convention rather than a hook: nothing in `@loquix/core` calls it. Neither the controller nor any component invokes `listModels()` — if you implement it, your own application code is what calls it and feeds the result to `<loquix-model-selector>`. The shapes do not match either, so that call has to map one to the other:
+
+  ```ts
+  const models = await provider.listModels(); // { id, name, description }[]
+
+  modelSelector.models = models.map(m => ({
+    value: m.id,
+    label: m.name,
+    description: m.description,
+  })); // ModelOption[]
+  ```
+
+  If you do not implement `listModels()`, drive the selector from static configuration instead.
 
 `send` should throw on failure — network error, non-2xx response, auth failure, rate limit — rather than returning a response with an error inside it. The controller catches the rejection and moves to its `error` state.
 
@@ -69,7 +81,7 @@ interface AgentSendOptions {
 }
 ```
 
-- **`signal`** — the controller always passes one. It combines the controller's own abort (only from an explicit `abort()` call) with its send timeout into a single signal, so forwarding it to `fetch` covers both a manual stop and the timeout in one place — it bounds the entire exchange, not just the wait for the stream to start.
+- **`signal`** — the controller always passes one. It combines its own internal abort with its send timeout into a single signal, so forwarding it to `fetch` covers both a stop and the timeout in one place — it bounds the entire exchange, not just the wait for the stream to start. That internal abort fires from more than an explicit `abort()` call: `reset()` aborts (it calls `abort()` internally), `setProvider()` aborts if the controller is not `idle` or `complete`, and — easy to miss — `hostDisconnected()` aborts too, so removing the host element from the DOM cancels an in-flight send or stream, the same way it does for [`UploadController`](/docs/integration/uploads/).
 - **`model`** — the model identifier configured on the controller, if any.
 - **`params`** — inference parameters such as `temperature`, `top_p`, or `max_tokens`, passed through as-is.
 - **`systemPrompt`** — a system prompt override, if the controller was configured with one.

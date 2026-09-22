@@ -76,7 +76,7 @@ class MyHost extends LitElement {
 
 The constructor's first argument is a Lit `ReactiveControllerHost` — inside a `LitElement`, that's the element itself, the same as [`AgentController`](/docs/integration/agent-controller/).
 
-As a `ReactiveController`, it implements `hostConnected()` and `hostDisconnected()`, but neither does what you might expect from the chat controller: `hostConnected()` is a no-op — nothing starts until you call `add()` — and `hostDisconnected()` calls `abortAll()`, so removing the host element from the DOM cancels every upload still in flight.
+As a `ReactiveController`, it implements `hostConnected()` and `hostDisconnected()` — the same shape as [`AgentController`](/docs/integration/agent-controller/): `hostConnected()` is a no-op — nothing starts until you call `add()` — and `hostDisconnected()` calls `abortAll()`, so removing the host element from the DOM cancels every upload still in flight.
 
 ### States
 
@@ -111,7 +111,7 @@ Unlike the chat controller, there's no `paused` state — uploads either run or 
 | Property | Type | Description |
 | --- | --- | --- |
 | `state` | `UploadState` | The current state, one of the four values above. |
-| `results` | `ReadonlyMap<string, UploadResult>` | Completed upload results, keyed by attachment ID. Not cleared by `abortAll()`, only by `reset()`. |
+| `results` | `ReadonlyMap<string, UploadResult>` | Completed upload results, keyed by attachment ID. Not cleared by `abortAll()`. `reset()` clears every entry; `retry()` clears just the one entry for the attachment it re-queues. |
 | `activeCount` | `number` | Number of uploads currently in flight. |
 | `queuedCount` | `number` | Number of uploads waiting for a concurrency slot. |
 
@@ -126,7 +126,7 @@ The third constructor argument is optional, and so is everything on it:
 | `retryDelay` | `number` (ms) | `1000` |
 | `uploadTimeout` | `number` (ms) | `300_000` (5 minutes) |
 
-These four are sanitized: a value that isn't a finite number, or is below the option's floor, falls back to its default, and a fractional value is floored to an integer. `concurrency` floors at `1`, `maxRetries` and `retryDelay` at `0`, and `uploadTimeout` at `1000`. Passing `maxRetries: 0` is a valid way to disable retries entirely, not an accident that gets corrected back to `2`.
+These four are sanitized: a value that is not a finite number falls back to its default; a finite value is floored to an integer and then clamped up to the option's floor if it is below it. `concurrency` floors at `1`, `maxRetries` and `retryDelay` at `0`, and `uploadTimeout` at `1000`. So `uploadTimeout: 500` becomes `1000`, not the five-minute default, and `concurrency: 0` becomes `1`, not `3` — only a non-finite value (`NaN`, `undefined`, `Infinity`) falls back to the default. Passing `maxRetries: 0` is a valid way to disable retries entirely: `0` is not below the floor, it *is* the floor, so there is nothing for sanitization to correct.
 
 #### `uploadTimeout` and abort
 

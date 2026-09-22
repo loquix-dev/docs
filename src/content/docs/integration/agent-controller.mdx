@@ -28,7 +28,7 @@ The controller's `state` is one of:
 | `streaming` | The response stream is being read and its chunks are accumulating. |
 | `paused` | Streaming was suspended with `pause()`; chunks continue to arrive but are buffered rather than applied. |
 | `complete` | The response finished and was appended to `messages` as an assistant message. |
-| `error` | `send()` rejected, or the stream errored, outside of an abort. |
+| `error` | `send()` rejected, or the stream errored, outside of an abort. Whatever text had accumulated survives only in `currentResponseText` — it is never appended to `messages`; persisting a cut-off answer, if you want one, is the host's job. |
 
 ## Methods
 
@@ -40,11 +40,11 @@ The controller's `state` is one of:
 | `abort` | `abort(): void` | Cancels the in-flight send or stream and returns to `idle`. No-op while `idle` or `complete`. |
 | `reset` | `reset(): void` | Aborts, clears `messages`, and returns to `idle`. |
 | `setMessages` | `setMessages(messages: AgentMessage[]): void` | Replaces the conversation history, for restoring a persisted conversation. Throws if called while `sending`, `streaming`, or `paused`. |
-| `setProvider` | `setProvider(provider: AgentProvider): void` | Swaps the provider. Aborts an in-flight send or stream first if one is active. |
+| `setProvider` | `setProvider(provider: AgentProvider): void` | Swaps the provider. If the controller's `state` is not `idle` or `complete` — that includes `error`, not only `sending`/`streaming`/`paused` — it logs a console warning and calls `abort()` first, the same pattern as [`UploadController.setProvider()`](/docs/integration/uploads/). |
 | `updateOptions` | `updateOptions(partial: Partial<AgentControllerOptions>): void` | Merges new values into the controller's options, such as `model` or `systemPrompt`, without touching the provider or the conversation. |
 
 <Aside type="caution">
-Calling `send()` again while the controller is `sending`, `streaming`, or `paused` does not cancel the request already in flight. It throws instead — the error message names the current state and tells you to call `abort()` first. Only `abort()` touches the underlying `AbortController`.
+Calling `send()` again while the controller is `sending`, `streaming`, or `paused` does not cancel the request already in flight. It rejects instead — the error message names the current state and tells you to call `abort()` first. `send()` is `async`, so this guard's `throw` becomes a rejected promise, not a synchronous exception; see the note on `await`/`.catch()` below. Only `abort()` touches the underlying `AbortController`.
 </Aside>
 
 ## Read-only properties
@@ -79,6 +79,10 @@ The third constructor argument configures the controller. Everything is optional
 
 The controller's own doc comment describes `sendTimeout` as bounding the time "until the `ReadableStream` is returned, NOT until first chunk." That description is only accurate for a provider that does not forward the signal past its own initial request. Once a provider hands the signal to `fetch`, as the example on the agent provider page does, the bound covers the entire exchange.
 
+When the timeout — or any other abort — lands mid-stream, the response so far is not lost, but it is not saved either: `currentResponseText` keeps whatever text had accumulated, while `messages` gets no assistant entry for it, so a host that wants to keep a cut-off answer has to read `currentResponseText` itself, typically from `onError`, and persist it before the controller moves on.
+
+Unlike the four options on the [upload controller](/docs/integration/uploads/)'s options table, `sendTimeout` is **not** sanitized: `0` and `NaN` are both falsy, so the controller's `if (this._options.sendTimeout)` check skips creating a timeout signal entirely and the send never times out, while `-1` is truthy and reaches `AbortSignal.timeout(-1)`, which throws a `RangeError` inside the `try` block and puts the controller straight into `error` before any request is made.
+
 ## The host argument
 
 The constructor's first argument is a Lit [`ReactiveControllerHost`](https://lit.dev/docs/composition/controllers/). Inside a `LitElement`, that host is the element itself:
@@ -89,8 +93,10 @@ class MyChat extends LitElement {
 }
 ```
 
+As a `ReactiveController`, `AgentController` implements `hostConnected()` and `hostDisconnected()` — the same shape as [`UploadController`](/docs/integration/uploads/): `hostConnected()` is a no-op, and `hostDisconnected()` calls `abort()`. That means removing the host element from the DOM aborts an in-flight send or stream, not just an explicit call to `abort()` — the same internal abort also fires from `reset()` (which calls `abort()` itself) and from `setProvider()` when the controller is not `idle` or `complete`. All four routes end up calling the same `AbortController`, so a provider that forwards `options.signal` to `fetch` is defended against every one of them, not only a deliberate stop button.
+
 <Aside type="caution">
-Outside a Lit component — for example, wiring the controller into a plain-HTML page with no host element — you must supply a minimal object implementing the same interface. `AgentController` only calls `addController`, `removeController`, and `requestUpdate` on it; it never awaits `updateComplete`, but the type requires the property, so it needs a value:
+Outside a Lit component — for example, wiring the controller into a plain-HTML page with no host element — you must supply a minimal object implementing the same interface. `AgentController` only ever calls `addController` and `requestUpdate` on it. `removeController` is never called — nothing in this package tears a controller back off its host — but the `ReactiveControllerHost` type still requires the method to exist, so the stub needs one anyway, even though it goes unused. Likewise, `AgentController` never awaits `updateComplete`, but the type requires the property, so it needs a value:
 
 ```js
 const host = {
@@ -105,6 +111,72 @@ const agent = new AgentController(host, provider);
 
 This object does nothing beyond satisfying the interface — no reactive update is scheduled by `requestUpdate()`. If nothing you write reads `agent.state`, `agent.messages`, or the other getters after a `requestUpdate()` call, you will not see new data. Call the controller's getters yourself, or attach `onStateChange` / `onMessagesChange` / `onResponseChunk` callbacks in the options argument to know when to re-read them.
 </Aside>
+
+## Wiring it to chat components
+
+Nothing connects `AgentController` to Loquix components automatically — a host renders the controller's state into them and turns their events back into controller calls, the same division of labor [`UploadController` has with `<loquix-attachment-panel>`](/docs/integration/uploads/#wiring-it-to-attachment-panel):
+
+```ts
+import { LitElement, html } from 'lit';
+import { AgentController } from '@loquix/core/controllers/agent.controller';
+import '@loquix/core/define/define-message-list';
+import '@loquix/core/define/define-message-item';
+import '@loquix/core/define/define-message-content';
+import '@loquix/core/define/define-chat-composer';
+import '@loquix/core/define/define-generation-controls';
+
+class MyChat extends LitElement {
+  // MyBackendProvider is the example from the agent provider page.
+  agent = new AgentController(this, new MyBackendProvider());
+
+  private get busy() {
+    return this.agent.state === 'sending' || this.agent.isStreaming;
+  }
+
+  render() {
+    const { state, messages, currentResponseText, isStreaming } = this.agent;
+
+    return html`
+      <loquix-message-list auto-scroll show-scroll-anchor>
+        ${messages.map(
+          (m) => html`
+            <loquix-message-item .sender=${m.role} status="complete">
+              <loquix-message-content>${m.content}</loquix-message-content>
+            </loquix-message-item>
+          `,
+        )}
+        ${isStreaming
+          ? html`
+              <loquix-message-item sender="assistant" status="streaming">
+                <loquix-message-content streaming>${currentResponseText}</loquix-message-content>
+              </loquix-message-item>
+            `
+          : null}
+      </loquix-message-list>
+
+      <loquix-generation-controls
+        state=${state === 'sending' || state === 'streaming' ? 'running' : state}
+        show-pause
+        @loquix-stop=${() => this.agent.abort()}
+        @loquix-pause=${() => this.agent.pause()}
+        @loquix-resume=${() => this.agent.resume()}
+      ></loquix-generation-controls>
+
+      <loquix-chat-composer
+        .streaming=${this.busy}
+        @loquix-submit=${(e: CustomEvent<{ content: string }>) => this.agent.send(e.detail.content)}
+        @loquix-stop=${() => this.agent.abort()}
+      ></loquix-chat-composer>
+    `;
+  }
+}
+```
+
+A few things worth pointing out, since none of them are obvious from either component's own reference page:
+
+- `<loquix-chat-composer>`'s `loquix-submit` event carries `{ content, attachments? }` in `event.detail`; `event.detail.content` is exactly the string `agent.send()` expects as its first argument.
+- `messages` only ever holds a user message or a *finished* assistant message — never a partial one (see the `error` row above) — so `status="complete"` is always correct for everything this loop renders. The one in-progress response is rendered separately, from `currentResponseText`, with `status="streaming"`.
+- `<loquix-chat-composer>` already renders its own stop button in place of the send button whenever its `streaming` property is `true`, and dispatches `loquix-stop` when it is clicked — that is what the composer's own `@loquix-stop` handler above is for. `<loquix-generation-controls>` is a separate, optional component for exposing `pause()`/`resume()`, since nothing in the composer drives those.
 
 ## Where this fits
 

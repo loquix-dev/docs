@@ -5,6 +5,10 @@ description: Turn an HTTP endpoint into an AgentProvider, with streaming, cancel
 
 import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
 
+<Aside type="caution" title="Not published yet">
+`@loquix/adapter-http` is unreleased. It ships shortly; until then, the install command below will not resolve. The API on this page describes the package as it will ship.
+</Aside>
+
 `@loquix/adapter-http` builds an [`AgentProvider`](/docs/integration/agent-provider/) for you out of a URL. Point it at your own backend and it POSTs the conversation, reads the response as it streams in, and turns it into the plain-text `ReadableStream` the interface expects — including the abort handling, the non-2xx rejections, and the frame-by-frame decoding a hand-written provider would otherwise have to implement itself. It replaces the `send()` method on that page, not the interface: everything the agent controller expects from a provider still applies.
 
 The package has zero runtime dependencies and holds no credentials. The URL it POSTs to is your own backend, so provider API keys stay on your server; see [keeping keys safe](/docs/integration/keeping-keys-safe/) for why that split exists and what it costs you to keep.
@@ -87,7 +91,7 @@ Expects [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Se
 
 ### `ndjson`
 
-Expects one JSON object per line, separated by `\n`. The default parser picks the first of `text`, `content`, or `delta` (in that order) that is *present* on the parsed object — `parsed.text ?? parsed.content ?? parsed.delta` — and emits it only if that one field is a string. It does not fall through to the next field if the one it picked is present but not a string: `{"text": 42, "content": "hi"}` emits nothing, because `text` was chosen and failed the string check, not `"hi"`. A line that parses as JSON but has none of the three fields present is skipped the same way — not an error, just no text to emit for that line.
+Expects one JSON object per line, separated by `\n`. The default parser picks the first of `text`, `content`, or `delta` (in that order) that is *neither `null` nor `undefined`* on the parsed object — `parsed.text ?? parsed.content ?? parsed.delta` — and emits it only if that one field is a string. Because `??` only skips `null`/`undefined`, not any other falsy value, a field can be present-but-`null` and still get skipped: `{"text": null, "content": "hi"}` emits `"hi"`, since `null` is passed over in favor of `content`. But once a field is selected this way, there is no further fallback if it turns out not to be a string: `{"text": 42, "content": "hi"}` emits nothing, because `text` was chosen (`42` is neither `null` nor `undefined`) and failed the string check, not `"hi"`. A line that parses as JSON but has none of the three fields set to anything other than `null`/`undefined` is skipped the same way — not an error, just no text to emit for that line.
 
 ### `text`
 
@@ -110,7 +114,7 @@ class HttpAgentError extends Error {
 ```
 
 - **A non-2xx response.** The adapter tries to read the body as JSON and use its `message` or `error` field as the error text; if the body isn't JSON, it falls back to the response's status text. Either way, `status` is the response's actual HTTP status.
-- **A 2xx response with no body at all.** Some servers can return `200 OK` with an empty body — nothing to stream. The adapter treats this the same as a failure: it rejects with `HttpAgentError` and `status: 502`, since there is no real response to hand the controller.
+- **A 2xx response with a null body.** The guard is `if (!response.body)`. A real `200 OK` with an *empty* body still has a non-null, readable `body` — `send()` resolves normally and the stream simply yields nothing. What actually triggers this case is a response with no body object at all: a `204 No Content` (the fetch spec gives these a null `body`), or a stub `Response` built with `body: null` in a test. The adapter treats it as a failure: it rejects with `HttpAgentError`, and `status` is the response's real status — a `204` produces `status: 204`, not a fabricated `502`.
 
 Both happen after `fetch` itself has already resolved. Anything that keeps `fetch` from resolving at all rejects `send()` unwrapped, with whatever `fetch` (or your own `fetch` replacement) rejects with — the adapter does not catch or wrap it:
 
