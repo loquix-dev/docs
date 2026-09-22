@@ -63,6 +63,7 @@ export default defineConfig({
 						{ label: 'Agent controller', slug: 'integration/agent-controller' },
 						{ label: 'File uploads', slug: 'integration/uploads' },
 						{ label: 'Keeping keys safe', slug: 'integration/keeping-keys-safe' },
+						{ label: 'HTTP adapter', slug: 'integration/http-adapter' },
 					],
 				},
 				{
