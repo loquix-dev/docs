@@ -248,6 +248,13 @@ header.header {
 	min-height: 9rem;
 }
 
+/* Starlight gives every element preceded by a sibling a margin-block-start.
+   Inside a preview that is prose spacing applied to demo markup: it knocks rows
+   out of vertical alignment and pushes flex items into wrapping early. */
+.loquix-preview__canvas :where(*) {
+	margin-block: 0;
+}
+
 .loquix-preview--tall .loquix-preview__canvas {
 	min-height: 34rem;
 	align-items: start;
@@ -292,11 +299,6 @@ header.header {
 	gap: 1.25rem;
 }
 
-/* Starlight adds margin-block-start to any element preceded by a sibling,
-   which pushes every row item but the first out of alignment. */
-.loquix-preview .action-row > * {
-	margin-block: 0;
-}
 
 .loquix-preview .citation-demo {
 	max-width: 34rem;
@@ -315,9 +317,6 @@ header.header {
 	margin-inline: auto;
 }
 
-.loquix-preview .card-row > * {
-	margin-block: 0;
-}
 
 .loquix-preview .stack-preview {
 	display: grid;
@@ -326,9 +325,6 @@ header.header {
 	margin-inline: auto;
 }
 
-.loquix-preview .stack-preview > * {
-	margin-block: 0;
-}
 
 .loquix-preview loquix-tool-call-list,
 .loquix-preview loquix-source-list,
