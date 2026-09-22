@@ -56,6 +56,12 @@ export default defineConfig({
 					],
 				},
 				{
+					label: 'Integration',
+					items: [
+						{ label: 'Overview', slug: 'integration' },
+					],
+				},
+				{
 					label: 'Guides',
 					items: [
 						{ label: 'Theming', slug: 'guides/theming' },

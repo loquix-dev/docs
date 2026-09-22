@@ -1,0 +1,35 @@
+---
+title: Integration
+description: How an agent provider, the agent controller, and Loquix components divide the work of talking to a backend.
+---
+
+Loquix components render a conversation. They do not decide what an assistant says, and they never call a backend. Connecting a real model happens in two other pieces: a provider you write, and a controller Loquix supplies.
+
+## The three pieces
+
+An **agent provider** is a small object that talks to your backend and returns a streaming response. You write it, because only you know your API shape, your auth, and your request format.
+
+The **agent controller** is a Lit reactive controller that owns conversation state: the message history, the current state (`idle`, `sending`, `streaming`, `paused`, `complete`, `error`), and the send lifecycle. It calls your provider and turns its stream into updates your component can render.
+
+**Components** — the message list, the composer, and the rest of the catalog — read and display that state. They dispatch events such as `loquix-submit`; they do not fetch, stream, or hold conversation history themselves.
+
+Components read from the controller, the controller reads from your provider, and nothing upstream of the controller talks back to a component directly.
+
+## What you write
+
+For the common case, you write one thing: a provider that implements `send(messages, options)` and returns a stream of text. History, state transitions, and DOM wiring are handled once you hand that provider to a controller.
+
+## What you do not write
+
+The controller already handles work that is easy to underestimate:
+
+- **Streaming assembly** — accumulating chunks into a current response as they arrive.
+- **Cancellation** — abort, pause, and resume, wired to a single `AbortController` per request.
+- **Timeouts** — a default 60-second limit on how long it waits for your provider's stream to start.
+- **Message limits** — default caps on a single message's length and on how many messages a conversation holds.
+
+None of that is implicit or hidden inside a component. It lives in the controller, and it exists so you do not have to reimplement it around every backend.
+
+## Where to go next
+
+Three pages cover the rest of this layer: one on the agent provider interface you implement, one on the agent controller that consumes it, and one on keeping API keys off the client entirely. Read the provider page first if you are connecting a new backend; read the keys page first if you are deciding where a request should originate.
