@@ -1,0 +1,164 @@
+---
+title: Agent provider
+description: The interface you implement to connect a Loquix chat to your backend.
+---
+
+An **agent provider** is the object you write to connect Loquix to a real backend. It is the only integration point: the agent controller calls it, and it calls your API. See the [integration overview](/docs/integration/) for how the two relate.
+
+A provider does two things:
+
+- Converts the conversation history and send options into whatever shape your backend expects.
+- Converts your backend's response into a `ReadableStream<string>` of plain text chunks.
+
+Nothing else about your backend — auth, request format, streaming protocol — is visible outside the provider. The controller only ever sees `AgentMessage[]` in and a stream of strings out.
+
+## The `AgentProvider` interface
+
+```ts
+interface AgentProvider {
+  readonly name: string;
+
+  send(messages: AgentMessage[], options: AgentSendOptions): Promise<AgentResponse>;
+
+  listModels?(): Promise<Array<{ id: string; name: string; description?: string }>>;
+}
+```
+
+- **`name`** — a human-readable label for the provider (for example `"Claude API"` or `"my-ai"`). It is not used for routing; it exists for logging and for display.
+- **`send(messages, options)`** — the one required method. It receives the full conversation history and returns a promise for an `AgentResponse`. The controller awaits this promise once per send; everything after that point is the stream inside the response.
+- **`listModels()`** — optional, and a convention rather than a hook: nothing in `@loquix/core` calls it. Neither the controller nor any component invokes `listModels()` — if you implement it, your own application code is what calls it and feeds the result to `<loquix-model-selector>`. The shapes do not match either, so that call has to map one to the other:
+
+  ```ts
+  const models = await provider.listModels(); // { id, name, description }[]
+
+  modelSelector.models = models.map(m => ({
+    value: m.id,
+    label: m.name,
+    description: m.description,
+  })); // ModelOption[]
+  ```
+
+  If you do not implement `listModels()`, drive the selector from static configuration instead.
+
+`send` should throw on failure — network error, non-2xx response, auth failure, rate limit — rather than returning a response with an error inside it. The controller catches the rejection and moves to its `error` state.
+
+## `AgentMessage`
+
+```ts
+interface AgentMessage {
+  id: string;
+  role: 'user' | 'assistant' | 'system' | 'tool';
+  content: string;
+  attachments?: AgentMessageAttachment[];
+  metadata?: Record<string, unknown>;
+}
+```
+
+This is the shape the controller keeps for conversation history and the shape `send` receives, one per message. It is deliberately minimal — a provider maps it to its backend's own message format internally rather than the reverse.
+
+`attachments`, when present, is an array of:
+
+```ts
+interface AgentMessageAttachment {
+  url: string;
+  mimeType: string;
+  filename?: string;
+}
+```
+
+These are references to already-uploaded files, not file contents — Loquix does not send binary data through `AgentMessage`.
+
+`metadata` is an open bag for anything provider-specific, such as tool call results or token counts. Loquix does not read it.
+
+## `AgentSendOptions`
+
+```ts
+interface AgentSendOptions {
+  signal?: AbortSignal;
+  model?: string;
+  params?: Record<string, unknown>;
+  systemPrompt?: string;
+}
+```
+
+- **`signal`** — the controller always passes one. It combines its own internal abort with its send timeout into a single signal, but the send-timeout side only bounds the wait for your `send()` to resolve: the instant it does, the controller clears that timer, and the signal cannot fire from `sendTimeout` again. Forward it to `fetch`, as the example below does, and a deliberate stop — `abort()`, `reset()`, `setProvider()` swapping providers, or `hostDisconnected()` when the host element is removed from the DOM — still cancels the request and its body at any point, mid-stream included. A slow-starting request times out; a request that is already streaming does not, no matter how long it runs. To bound silence within a stream that has started, the controller has a separate `streamIdleTimeout` option — see the [agent controller page](/docs/integration/agent-controller/) — enforced by the controller's own stream consumption, not through this signal at all.
+- **`model`** — the model identifier configured on the controller, if any.
+- **`params`** — inference parameters such as `temperature`, `top_p`, or `max_tokens`, passed through as-is.
+- **`systemPrompt`** — a system prompt override, if the controller was configured with one.
+
+A provider is free to ignore any option it does not support.
+
+## `AgentResponse`
+
+```ts
+interface AgentResponse {
+  id: string;
+  stream: ReadableStream<string>;
+  metadata?: Record<string, unknown>;
+}
+```
+
+- **`id`** — a unique identifier for this response message.
+- **`stream`** — a standard `ReadableStream<string>`. The controller reads it chunk by chunk and accumulates the result; it does not know or care what streaming protocol your backend used to produce those chunks.
+- **`metadata`** — provider-specific information about the response, such as the model that actually served it or a finish reason.
+
+The stream carries plain text chunks, not tokens and not raw SSE frames. If your backend streams newline-delimited JSON, server-sent events, or a token-by-token protocol, decoding that into text is the provider's job, done before each chunk reaches the stream.
+
+## A complete example
+
+This provider calls a `/api/chat` endpoint that streams newline-delimited JSON events (`{ "text": "..." }`) and turns them into a plain-text stream:
+
+```ts
+import type {
+  AgentProvider,
+  AgentMessage,
+  AgentSendOptions,
+  AgentResponse,
+} from '@loquix/core/providers/agent-provider';
+
+class MyBackendProvider implements AgentProvider {
+  readonly name = 'my-backend';
+
+  async send(messages: AgentMessage[], options: AgentSendOptions): Promise<AgentResponse> {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      signal: options.signal,
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        messages: messages.map(m => ({ role: m.role, content: m.content })),
+        model: options.model,
+        system: options.systemPrompt,
+      }),
+    });
+
+    if (!response.ok) throw new Error(`Chat request failed: ${response.status}`);
+
+    const body = response.body!;
+    const stream = new ReadableStream<string>({
+      async start(controller) {
+        const reader = body.pipeThrough(new TextDecoderStream()).getReader();
+        let buffer = '';
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += value;
+          const lines = buffer.split('\n');
+          buffer = lines.pop() ?? '';
+          for (const line of lines) {
+            if (line.trim()) controller.enqueue(JSON.parse(line).text);
+          }
+        }
+        controller.close();
+      },
+    });
+
+    return { id: crypto.randomUUID(), stream };
+  }
+}
+```
+
+Hand an instance of this class to the agent controller in place of a stub, and messages sent through Loquix components reach `/api/chat` and stream back into the conversation.
+
+## Where this fits
+
+The agent controller is the only consumer of this interface — nothing in the component catalog calls a provider directly. See the [integration overview](/docs/integration/) for how the provider, the controller, and Loquix components divide the work.

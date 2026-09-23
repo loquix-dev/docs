@@ -56,6 +56,17 @@ export default defineConfig({
 					],
 				},
 				{
+					label: 'Integration',
+					items: [
+						{ label: 'Overview', slug: 'integration' },
+						{ label: 'Agent provider', slug: 'integration/agent-provider' },
+						{ label: 'Agent controller', slug: 'integration/agent-controller' },
+						{ label: 'File uploads', slug: 'integration/uploads' },
+						{ label: 'Keeping keys safe', slug: 'integration/keeping-keys-safe' },
+						{ label: 'HTTP adapter', slug: 'integration/http-adapter' },
+					],
+				},
+				{
 					label: 'Guides',
 					items: [
 						{ label: 'Theming', slug: 'guides/theming' },

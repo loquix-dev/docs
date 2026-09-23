@@ -1,0 +1,195 @@
+---
+title: File uploads
+description: The provider and controller that move a picked file to a hosted URL.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Loquix's chat components never send file contents anywhere. What moves through the chat seam is a reference — an `AgentMessageAttachment` of `{ url, mimeType, filename }`, described on the [agent provider page](/docs/integration/agent-provider/) as "references to already-uploaded files, not file contents." Getting a picked file to that `url` is a separate concern, and it has the same two-piece shape as the chat seam: an **upload provider** you write, and an **upload controller** Loquix supplies to drive it.
+
+`<loquix-attachment-panel>` collects files from the user and renders them as chips, using the `status` and `progress` fields on each [`Attachment`](/docs/components/attachment-panel/) to show pending, uploading, complete, and error states. It does not upload anything itself — see [Attachment Panel](/docs/components/attachment-panel/) for the reassignment rule this page reuses. `UploadController` is what actually runs the uploads and keeps those fields current.
+
+## The `UploadProvider` interface
+
+```ts
+interface UploadProvider {
+  readonly name: string;
+
+  upload(file: File, options: UploadOptions): Promise<UploadResult>;
+
+  delete?(result: UploadResult): Promise<void>;
+
+  validate?(file: File): string | undefined;
+}
+```
+
+- **`name`** — a human-readable label, for debugging and logging.
+- **`upload(file, options)`** — the one required method. It receives the picked `File` and an `AbortSignal`/progress callback, and resolves with an `UploadResult`. Throw on failure; `UploadController` handles retries.
+- **`delete?(result)`** — optional. Receives the full `UploadResult`, not just a URL, so a provider can read its own asset identifier back out of `result.assetId` or `result.metadata` rather than parsing a possibly-transformed URL.
+- **`validate?(file)`** — optional and synchronous. `UploadController` calls it before a file enters the queue, for checks that do not need the network — size, MIME type, extension. Return an error message to reject the file, or `undefined` to accept it.
+
+<Aside type="note">
+The interface's own comment is explicit that implementations must not embed secret keys client-side: operations that need a secret — deletion, signed uploads — belong behind a server-side proxy, not inside a provider shipped to the browser.
+</Aside>
+
+## `UploadOptions` and `UploadResult`
+
+`UploadController` calls `upload(file, options)` with:
+
+```ts
+interface UploadOptions {
+  signal?: AbortSignal;
+  onProgress?: (progress: number) => void;
+}
+```
+
+`signal` is always present in practice — see "`uploadTimeout` and abort" below for what it is composed from. `onProgress` reports 0–100; a provider unable to report real progress can simply never call it.
+
+A resolved upload returns:
+
+```ts
+interface UploadResult {
+  url: string;
+  assetId?: string;
+  variants?: Record<string, string>;
+  metadata?: Record<string, unknown>;
+}
+```
+
+- **`url`** — the only required field. The controller validates this URL itself before treating the upload as successful; see "URL validation" below.
+- **`assetId`** — a provider-specific identifier (an Uploadcare UUID, an S3 key, a Supabase path) for `delete()` to use later.
+- **`variants`** — optional named URL variants, such as a thumbnail or a transcoded format.
+- **`metadata`** — an open bag of provider-specific data.
+
+## The `UploadController`
+
+```ts
+import { UploadController } from '@loquix/core/controllers/upload.controller';
+
+class MyHost extends LitElement {
+  private _upload = new UploadController(this, new MyUploadProvider(), {
+    concurrency: 3,
+    onUploadComplete: (attachment, result) => { /* ... */ },
+  });
+}
+```
+
+The constructor's first argument is a Lit `ReactiveControllerHost` — inside a `LitElement`, that is the element itself, the same as [`AgentController`](/docs/integration/agent-controller/).
+
+As a `ReactiveController`, it implements `hostConnected()` and `hostDisconnected()` — the same shape as [`AgentController`](/docs/integration/agent-controller/): `hostConnected()` is a no-op — nothing starts until you call `add()` — and `hostDisconnected()` calls `abortAll()`, so removing the host element from the DOM cancels every upload still in flight.
+
+## States
+
+`state` is one of:
+
+| State | Meaning |
+| --- | --- |
+| `idle` | Nothing active, queued, or waiting on a retry, and no results or errors recorded. The starting state, and where `reset()` returns to. |
+| `uploading` | At least one upload is active, queued, or waiting on a retry timer. This takes priority over `error` — a batch with some failures and others still running reports `uploading` until nothing is left in flight. |
+| `error` | Nothing is active, queued, or retrying, and at least one file ended in an error. |
+| `complete` | Nothing is active, queued, or retrying, nothing errored, and at least one file succeeded. |
+
+Unlike the chat controller, there is no `paused` state — uploads either run or they do not.
+
+## Methods
+
+| Method | Signature | Effect |
+| --- | --- | --- |
+| `add` | `add(attachments: Attachment[]): void` | Validates each attachment synchronously via `provider.validate()` (if defined). An attachment with no `file`, or one that fails validation, is marked `status: 'error'` immediately and never queued; everything else is queued and starts uploading right away, up to `concurrency`. |
+| `retry` | `retry(attachmentId: string): void` | Re-queues a previously errored attachment. Throws — synchronously, not as a rejected promise, since `retry()` is not `async` — if the ID was never passed to `add()`. Otherwise a no-op unless the attachment is currently errored: active, queued, and completed attachments cannot be retried. An errored attachment with no `file` — including one that errored because it never had one — also stays put; there is nothing to upload. Otherwise re-runs `provider.validate()` if present; a renewed validation failure leaves the attachment errored without firing any callback. |
+| `cancel` | `cancel(attachmentId: string): void` | Removes the attachment from the queue if queued, clears its pending retry timer if any, and aborts it if active. Unlike `retry()`, an unknown or already-settled ID is a silent no-op — it never throws. |
+| `abortAll` | `abortAll(): void` | Aborts every active upload, clears the queue, and clears pending retry timers. Does not clear completed results. |
+| `reset` | `reset(): void` | Calls `abortAll()`, then clears results, error tracking, and attachment history, and returns to `idle`. |
+| `setProvider` | `setProvider(provider: UploadProvider): void` | Swaps the provider used for subsequent uploads. If the controller is currently `uploading`, it logs a console warning and calls `abortAll()` first — in-flight uploads are aborted, not handed to the new provider. |
+
+<Aside type="caution">
+`add()` expects freshly picked files. An attachment restored from a persisted conversation — `url` set, no `file` — is treated the same as a missing file: it is marked `status: 'error'` with `"No file provided"` and never queued. Only pass attachments that carry a `File` object.
+</Aside>
+
+## Read-only properties
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `state` | `UploadState` | The current state, one of the four values above. |
+| `results` | `ReadonlyMap<string, UploadResult>` | Completed upload results, keyed by attachment ID. Not cleared by `abortAll()`. `reset()` clears every entry. `retry()` also deletes the entry for its one attachment, though in the ordinary flow there is nothing there to delete — that only matters if the same attachment ID was previously completed, re-added, and failed the second time around. |
+| `activeCount` | `number` | Number of uploads currently in flight. |
+| `queuedCount` | `number` | Number of uploads waiting for a concurrency slot. |
+
+## Options
+
+The third constructor argument is optional, and so is everything on it:
+
+| Option | Type | Default |
+| --- | --- | --- |
+| `concurrency` | `number` | `3` |
+| `maxRetries` | `number` | `2` |
+| `retryDelay` | `number` (ms) | `1000` |
+| `uploadTimeout` | `number` (ms) | `300_000` (5 minutes) |
+
+These four are sanitized: a value that is not a finite number falls back to its default; a finite value is floored to an integer and then clamped up to the option's floor if it is below it. `concurrency` floors at `1`, `maxRetries` and `retryDelay` at `0`, and `uploadTimeout` at `1000`. So `uploadTimeout: 500` becomes `1000`, not the five-minute default, and `concurrency: 0` becomes `1`, not `3` — only a non-finite value (`NaN`, `undefined`, `Infinity`) falls back to the default. Passing `maxRetries: 0` is a valid way to disable retries entirely: `0` is not below the floor, it *is* the floor, so there is nothing for sanitization to correct.
+
+### `uploadTimeout` and abort
+
+Each upload attempt gets its own combined signal: the per-file `AbortController` used by `cancel()`/`abortAll()`, composed with a fresh `AbortSignal.timeout(uploadTimeout)` via `AbortSignal.any([...])`. That combined signal is what `provider.upload()` receives as `options.signal`. The timeout is measured from when the attempt actually starts — not from when `add()` queued it — so a file waiting behind others at the concurrency limit does not burn down its timeout while it waits, and a retried attempt gets a full new timeout window rather than a countdown continuing from the failed attempt.
+
+## Callbacks
+
+All optional, and all part of the same options object as above:
+
+| Callback | Signature | Fires when |
+| --- | --- | --- |
+| `onAttachmentUpdate` | `(attachment: Attachment) => void` | An attachment's status or progress changes — queued, uploading with a new `progress` value, completed, or errored. |
+| `onUploadComplete` | `(attachment: Attachment, result: UploadResult) => void` | A single file's upload succeeds. |
+| `onUploadError` | `(attachment: Attachment, error: Error) => void` | A single file's upload fails. This fires for a validation failure caught in `add()` before the file ever reaches the queue, just as it does for a network or provider failure after every retry is exhausted — an invalid file never gets a retry, but it still reaches this callback. |
+| `onAllComplete` | `(results: ReadonlyMap<string, UploadResult>) => void` | The queue is fully drained and every file succeeded. If even one file is in an errored state when the queue empties, this does not fire at all. |
+| `onStateChange` | `(state: UploadState) => void` | `state` changes to a new value (no-op transitions to the same state do not re-fire it). |
+
+## URL validation
+
+<Aside type="caution" title="Upload URLs must be HTTPS">
+After `provider.upload()` resolves, `UploadController` parses the returned `url` and rejects it unless its protocol is exactly `https:`. There is no option to turn this off.
+
+This check happens inside the same internal flow as any other upload failure, so it follows the same path: a plain-HTTP URL does not reject immediately to your calling code, it fails the attempt, and with the default `maxRetries: 2` the controller calls `provider.upload()` two more times, a `retryDelay` apart, before finally landing in `status: 'error'` with a message naming the offending protocol (`Upload URL must use HTTPS, got: http:`). A staging provider that legitimately returns `http://` URLs will look like a flaky or slow backend, not like a hard rejection, until you notice the retries and the error text.
+</Aside>
+
+## Wiring it to Attachment Panel
+
+`UploadController` never touches the array bound to `<loquix-attachment-panel>` — the same reassignment rule from [Attachment Panel](/docs/components/attachment-panel/) applies here. `onAttachmentUpdate` hands you a new attachment object; your host reassigns its own array so the panel re-renders:
+
+```js
+import { UploadController } from '@loquix/core/controllers/upload.controller';
+
+class MyHost extends LitElement {
+  attachments = [];
+
+  _upload = new UploadController(this, new MyUploadProvider(), {
+    onAttachmentUpdate: (attachment) => {
+      this.attachments = this.attachments.map((a) =>
+        a.id === attachment.id ? attachment : a,
+      );
+    },
+  });
+
+  render() {
+    return html`
+      <loquix-attachment-panel
+        .attachments=${this.attachments}
+        @loquix-attachment-add=${(e) => {
+          this.attachments = [...this.attachments, ...e.detail.attachments];
+          this._upload.add(e.detail.attachments);
+        }}
+        @loquix-attachment-remove=${(e) => {
+          this._upload.cancel(e.detail.id);
+          this.attachments = this.attachments.filter((a) => a.id !== e.detail.id);
+        }}
+      ></loquix-attachment-panel>
+    `;
+  }
+}
+```
+
+Once `onUploadComplete` or `onAllComplete` reports a finished `UploadResult`, its `url` is what you put into an `AgentMessageAttachment` for [`AgentController.send()`](/docs/integration/agent-controller/) — nothing wires that hand-off automatically, since that is the point where the upload seam ends and the chat seam begins.
+
+## Where this fits
+
+The upload seam and the chat seam run independently: nothing in `UploadController` calls an agent provider, and nothing in `AgentController` calls an upload provider. See the [integration overview](/docs/integration/) for how a provider, a controller, and Loquix components divide the work on each seam.

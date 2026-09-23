@@ -1,0 +1,220 @@
+---
+title: Agent controller
+description: The Lit reactive controller that owns conversation state and drives an agent provider.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+The **agent controller** is the piece between your [agent provider](/docs/integration/agent-provider/) and Loquix components. It holds the conversation history, tracks the send lifecycle as a small state machine, and calls your provider — components never call a provider directly. See the [integration overview](/docs/integration/) for how the three pieces relate.
+
+You do not write this piece. You construct it with a provider and, optionally, some configuration, and then call its methods from your host component.
+
+```ts
+import { AgentController } from '@loquix/core/controllers/agent.controller';
+
+const agent = new AgentController(this, provider, {
+  model: 'claude-sonnet-4-20250514',
+});
+```
+
+## States
+
+The controller's `state` is one of:
+
+| State | Meaning |
+| --- | --- |
+| `idle` | No send in progress. The starting state, and where `abort()` and `reset()` return to. |
+| `sending` | `send()` has been called and is awaiting the provider's `send()` promise. |
+| `streaming` | The response stream is being read and its chunks are accumulating. |
+| `paused` | Streaming was suspended with `pause()`; chunks continue to arrive but are buffered rather than applied. |
+| `complete` | The response finished and was appended to `messages` as an assistant message. |
+| `error` | The provider's `send()` rejected after being called — including a `sendTimeout` that fires while it is still pending — or the stream errored outside of an abort, including a `streamIdleTimeout` that trips. What `currentResponseText` holds at that point depends on which — see "Partial responses" below. This is narrower than every way `send()` can reject: the `maxMessageLength` and `maxMessages` checks and the concurrent-send guard, all described under `send()` below, reject before the provider is ever called and leave `state` untouched. |
+
+## Methods
+
+| Method | Signature | Effect |
+| --- | --- | --- |
+| `send` | `send(content: string, attachments?: AgentMessageAttachment[]): Promise<void>` | Appends a user message, calls the provider, and streams the response. |
+| `pause` | `pause(): void` | Suspends stream consumption. Buffered chunks are not lost — `resume()` flushes them. |
+| `resume` | `resume(): void` | Resumes a paused stream. |
+| `abort` | `abort(): void` | Cancels the in-flight send or stream and returns to `idle`. No-op while `idle` or `complete`. |
+| `reset` | `reset(): void` | Aborts, clears `messages`, and returns to `idle`. |
+| `setMessages` | `setMessages(messages: AgentMessage[]): void` | Replaces the conversation history, for restoring a persisted conversation. Throws if called while `sending`, `streaming`, or `paused`. |
+| `setProvider` | `setProvider(provider: AgentProvider): void` | Swaps the provider. If the controller's `state` is not `idle` or `complete` — that includes `error`, not only `sending`/`streaming`/`paused` — it logs a console warning and calls `abort()` first. [`UploadController.setProvider()`](/docs/integration/uploads/) warns the same way, but on a narrower condition: only while `uploading`, not while `error`. |
+| `updateOptions` | `updateOptions(partial: Partial<AgentControllerOptions>): void` | Merges new values into the controller's options, such as `model` or `systemPrompt`, without touching the provider or the conversation. |
+
+<Aside type="caution">
+Calling `send()` again while the controller is `sending`, `streaming`, or `paused` does not cancel the request already in flight. It rejects instead — the error message names the current state and tells you to call `abort()` first. `send()` is `async`, so this guard's `throw` becomes a rejected promise, not a synchronous exception; see the note on `await`/`.catch()` below. Only `abort()` touches the underlying `AbortController`.
+</Aside>
+
+## Read-only properties
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `state` | `AgentState` | The current state, one of the six values above. |
+| `messages` | `readonly AgentMessage[]` | The full conversation history, including the in-progress user message once `send()` has been called. |
+| `currentResponseText` | `string` | Text accumulated so far for the response currently streaming, or the last one that streamed. It is cleared when the provider hands back a stream, not when `send()` is called, so between those two moments it still holds the previous response — see "Partial responses" below. |
+| `isStreaming` | `boolean` | `true` while `state` is `streaming` or `paused`. |
+
+## Options
+
+The third constructor argument configures the controller. Everything is optional.
+
+| Option | Type | Default |
+| --- | --- | --- |
+| `model` | `string` | none |
+| `params` | `Record<string, unknown>` | none |
+| `systemPrompt` | `string` | none |
+| `sendTimeout` | `number` (ms) | `60_000` |
+| `streamIdleTimeout` | `number` (ms) | `60_000` |
+| `maxMessageLength` | `number` | `100_000` |
+| `maxMessages` | `number` | `200` |
+
+`model`, `params`, and `systemPrompt` are passed straight through to the provider's `send()` as part of `AgentSendOptions` on every call; see the [agent provider page](/docs/integration/agent-provider/) for how a provider is expected to use them.
+
+`maxMessageLength` rejects an individual message whose content is too long; `maxMessages` rejects a `send()` that would push the conversation over the cap, counting both the new user message and the assistant response it will produce. Both reject the promise `send()` returns, before any request is made. `send()` is `async`, so the error never arrives as a synchronous exception — `await` the call, or attach a `.catch()`, to see it.
+
+These two guards, and the concurrent-send guard above, are the only things that reject `send()`. Everything that goes wrong *after* the provider is called — a provider that throws, a `sendTimeout`, a stream that errors — is caught by the controller instead: `send()` resolves normally, `state` becomes `error`, and `onError` is where you hear about it.
+
+### `sendTimeout`
+
+`sendTimeout` bounds only the wait for `provider.send()` to resolve with a stream — not the response that follows. On every `send()`, the controller composes its own abort signal with a dedicated timeout signal and passes the combined signal to `provider.send()` as `options.signal`, the same as before. The difference is what happens once `provider.send()` resolves: the controller clears that timer itself, right there, before doing anything else. From that point on the composed signal can still fire from a deliberate abort — `abort()`, `reset()`, `setProvider()`, `hostDisconnected()` — but `sendTimeout` itself has no further effect, even for a provider that forwards the signal straight to `fetch` for the whole request, as the [example provider](/docs/integration/agent-provider/) does.
+
+Measured: with `sendTimeout: 500`, a stream that starts inside that window and then keeps emitting chunks for 1.2 seconds completes in full — the assistant message is appended and no error fires. A `provider.send()` that never resolves at all is a different story: that wait is still bounded at the configured value, exactly as before, since there is no stream yet to leave alone.
+
+The controller's own doc comment describes `sendTimeout` as bounding the time "until the `ReadableStream` is returned, NOT until first chunk." That is now accurate for every provider, including one that forwards the signal to `fetch` for the entire exchange — the timer backing `sendTimeout` is already gone by the time the stream exists, so there is nothing left for that forwarded signal to cut off mid-answer.
+
+Use `streamIdleTimeout`, below, to bound a stream that has already started.
+
+### `streamIdleTimeout`
+
+Aborts the response stream when no chunk has arrived within this many milliseconds, resetting on every chunk — a long but healthy answer is never punished, only silence is. Default `60_000`, same as `sendTimeout`.
+
+Measured: a stream that emits one chunk and then goes silent trips a `streamIdleTimeout: 300` after 300ms, moving the controller to `error` and firing `onError`. The same 300ms window does not trip against a stream with steady 150ms gaps between chunks, which runs to completion normally.
+
+Pausing suspends idle detection entirely rather than letting it keep counting down — time spent `paused` is never held against the stream. Measured: pausing for 600ms under a 300ms `streamIdleTimeout` does not trip it, and resuming gives the stream a fresh idle window rather than one already half-spent.
+
+When `streamIdleTimeout` trips, `currentResponseText` still holds whatever text had accumulated — see "Partial responses" below.
+
+### Sanitizing
+
+`sendTimeout` and `streamIdleTimeout` are each sanitized the same way, and the rule maps each kind of odd value onto what it most likely means:
+
+| Value | Result | Why |
+| --- | --- | --- |
+| `undefined` | `60_000` | The option was not set. |
+| `0` or negative | disabled | An explicit request for no timeout. `sendTimeout: -1` no longer throws; it behaves exactly like `0`. |
+| `Infinity`, `-Infinity` | disabled | The natural way to write "no limit". |
+| `NaN`, or anything that is not a number | `60_000` | Almost always arithmetic on a missing config value, so the guard is kept rather than silently removed. |
+
+This differs on purpose from the upload options on [File uploads](/docs/integration/uploads/), where `Infinity` falls back to the default: an unbounded retry count or concurrency is meaningless, while an unbounded timeout is a thing people genuinely want.
+
+This is a different rule from the [upload controller](/docs/integration/uploads/)'s four sanitized options, which floor a too-low value up to a minimum rather than disabling it — `uploadTimeout: 500` becomes `1000`, never "off". Here, `0` or negative always means off, for both options.
+
+### Partial responses
+
+A response that gets interrupted is not handled the same way by every path that can cause it — `messages` never gets an entry for a response that did not finish, in any of these cases, but `currentResponseText` behaves differently in each:
+
+- **`streamIdleTimeout` tripping, or another stream failure that lands *after* the response has started streaming,** moves the controller to `error` and fires `onError`. `currentResponseText` keeps whatever text had accumulated up to that point. Persisting it, if you want to, is the host's job — do it from the `onError` callback. `sendTimeout` cannot land here anymore — see above.
+- **`abort()` and `hostDisconnected()`** stop the stream and return to `idle` instead — `onError` does not fire for either. `currentResponseText` still keeps the accumulated text, so a host that cares about this case has to check for it right after calling `abort()` itself (or after tearing down the host), not from a callback.
+- **`reset()`** goes further: it clears `currentResponseText` along with everything else, so there is nothing left to read once it returns.
+- **A call to the provider's `send()` that rejects before any response starts streaming** also lands in `error`, but `currentResponseText` is untouched by it. This covers two different failures the same way: an immediate network error the provider throws right away, and a `sendTimeout` that fires while the provider's own promise is still pending — before it ever hands back a stream to interrupt. Either way, `currentResponseText` still holds whatever response completed *last*, not anything from the new failed attempt. Reading it as "the answer that just failed" only makes sense for the mid-stream case above; here, persisting it would just re-save the previous response. (This is distinct from the guard-clause rejections on `send()` covered above, which reject before the provider is ever called and never touch `state` at all.)
+
+## The host argument
+
+The constructor's first argument is a Lit [`ReactiveControllerHost`](https://lit.dev/docs/composition/controllers/). Inside a `LitElement`, that host is the element itself:
+
+```ts
+class MyChat extends LitElement {
+  private agent = new AgentController(this, provider);
+}
+```
+
+As a `ReactiveController`, `AgentController` implements `hostConnected()` and `hostDisconnected()` — the same shape as [`UploadController`](/docs/integration/uploads/). `hostConnected()` is a no-op. `hostDisconnected()` calls `abort()`. That means removing the host element from the DOM aborts an in-flight send or stream, not just an explicit call to `abort()`. The same internal abort also fires from `reset()` (which calls `abort()` itself) and from `setProvider()` when the controller is not `idle` or `complete`. All four routes end up calling the same `AbortController`, so a provider that forwards `options.signal` to `fetch` is defended against every one of them, not only a deliberate stop button.
+
+<Aside type="caution">
+Outside a Lit component — for example, wiring the controller into a plain-HTML page with no host element — you must supply a minimal object implementing the same interface. `AgentController` only ever calls `addController` and `requestUpdate` on it. `removeController` is never called — nothing in this package tears a controller back off its host — but the `ReactiveControllerHost` type still requires the method to exist, so the stub needs one anyway, even though it goes unused. Likewise, `AgentController` never awaits `updateComplete`, but the type requires the property, so it needs a value:
+
+```js
+const host = {
+  addController() {},
+  removeController() {},
+  requestUpdate() {},
+  updateComplete: Promise.resolve(true),
+};
+
+const agent = new AgentController(host, provider);
+```
+
+This object does nothing beyond satisfying the interface — no reactive update is scheduled by `requestUpdate()`. If nothing you write reads `agent.state`, `agent.messages`, or the other getters after a `requestUpdate()` call, you will not see new data. Call the controller's getters yourself, or attach `onStateChange` / `onMessagesChange` / `onResponseChunk` callbacks in the options argument to know when to re-read them.
+</Aside>
+
+## Wiring it to chat components
+
+Nothing connects `AgentController` to Loquix components automatically — a host renders the controller's state into them and turns their events back into controller calls, the same division of labor [`UploadController` has with `<loquix-attachment-panel>`](/docs/integration/uploads/#wiring-it-to-attachment-panel):
+
+```ts
+import { LitElement, html } from 'lit';
+import { AgentController } from '@loquix/core/controllers/agent.controller';
+import '@loquix/core/define/define-message-list';
+import '@loquix/core/define/define-message-item';
+import '@loquix/core/define/define-message-content';
+import '@loquix/core/define/define-chat-composer';
+import '@loquix/core/define/define-generation-controls';
+
+class MyChat extends LitElement {
+  // MyBackendProvider is the example from the agent provider page.
+  agent = new AgentController(this, new MyBackendProvider());
+
+  private get busy() {
+    return this.agent.state === 'sending' || this.agent.isStreaming;
+  }
+
+  render() {
+    const { state, messages, currentResponseText, isStreaming } = this.agent;
+
+    return html`
+      <loquix-message-list auto-scroll show-scroll-anchor>
+        ${messages.map(
+          (m) => html`
+            <loquix-message-item .sender=${m.role} status="complete">
+              <loquix-message-content>${m.content}</loquix-message-content>
+            </loquix-message-item>
+          `,
+        )}
+        ${isStreaming
+          ? html`
+              <loquix-message-item sender="assistant" status="streaming">
+                <loquix-message-content streaming>${currentResponseText}</loquix-message-content>
+              </loquix-message-item>
+            `
+          : null}
+      </loquix-message-list>
+
+      <loquix-generation-controls
+        state=${state === 'sending' || state === 'streaming' ? 'running' : state}
+        show-pause
+        @loquix-stop=${() => this.agent.abort()}
+        @loquix-pause=${() => this.agent.pause()}
+        @loquix-resume=${() => this.agent.resume()}
+      ></loquix-generation-controls>
+
+      <loquix-chat-composer
+        .streaming=${this.busy}
+        @loquix-submit=${(e: CustomEvent<{ content: string }>) => this.agent.send(e.detail.content)}
+        @loquix-stop=${() => this.agent.abort()}
+      ></loquix-chat-composer>
+    `;
+  }
+}
+```
+
+A few things worth pointing out, since none of them are obvious from either component's own reference page:
+
+- `<loquix-chat-composer>`'s `loquix-submit` event is typed with an optional `attachments?: File[]` on `event.detail`, but nothing in `@loquix/core` ever sets it — in practice the event carries only `content`. That is just as well: `File[]` is not the `AgentMessageAttachment[]` shape `agent.send()` takes as its second argument anyway, so wiring uploads through still means building that array yourself from completed [upload results](/docs/integration/uploads/), not from this event. `event.detail.content` is exactly the string `agent.send()` expects as its first argument.
+- `messages` only ever holds a user message or a *finished* assistant message — never a partial one (see "Partial responses" above) — so `status="complete"` is always correct for everything this loop renders. The one in-progress response is rendered separately, from `currentResponseText`, with `status="streaming"`.
+- `<loquix-chat-composer>` already renders its own stop button in place of the send button whenever its `streaming` property is `true`, and dispatches `loquix-stop` when it is clicked — that is what the composer's own `@loquix-stop` handler above is for. `<loquix-generation-controls>` is a separate, optional component for exposing `pause()`/`resume()`, since nothing in the composer drives those.
+
+## Where this fits
+
+The agent controller is the only consumer of the [agent provider](/docs/integration/agent-provider/) interface. See the [integration overview](/docs/integration/) for how the provider, the controller, and Loquix components divide the work.

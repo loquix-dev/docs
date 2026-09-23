@@ -1,0 +1,40 @@
+---
+title: Keeping keys safe
+description: Why a provider API key never belongs in the browser, and where it lives instead.
+---
+
+A provider API key is a credential, and this page is about the one place it must never live: code that runs in a browser. It covers why that is a hard rule rather than a preference, what shape your architecture takes once you follow it, and how much of that shape Loquix's components and controllers already assume on your behalf.
+
+## The rule
+
+A provider API key never reaches the browser. Anything you ship to a client — JavaScript source, a bundled config object, an environment variable exposed at build time — is readable by whoever is running that client. There is no way to hand a key to code running on a user's machine and keep it from that user.
+
+An `Origin` header check does not change this. A real browser does set that header itself — `Origin` is a forbidden header name, so page JavaScript cannot override it in a `fetch` call. But nothing about an HTTP request requires a browser. Whoever has extracted your key calls the vendor, or your proxy, from `curl` or a script, and sends whatever `Origin` you want to see, or none at all. The check constrains cross-origin requests made by unmodified browsers; it says nothing about the client that is already holding your key.
+
+If a key can be extracted from what you send to the browser, it is compromised, regardless of what checks the request that carries it passes.
+
+## What this means for architecture
+
+Your backend sits between the UI and the model. The browser talks to your backend; your backend talks to the vendor.
+
+```
+Loquix components → your backend → provider API
+```
+
+The browser never holds a provider credential and never makes a request the vendor accepts directly. Your backend is the only thing that presents the key, and it presents it in requests it constructs itself, from messages it received over a connection it controls.
+
+An [agent provider](/docs/integration/agent-provider/) you write is exactly the seam where this split happens: `send()` runs in the browser and calls your backend, not the vendor, so the object shipped to the client never contains a credential to begin with.
+
+## What the components already assume
+
+Loquix components never call a backend. They render conversation state and dispatch events; the [agent controller](/docs/integration/agent-controller/) drives that state by calling the provider you hand it. Nothing in the catalog, and nothing in the controller, makes an outbound request to a model vendor — that request only exists inside the provider's `send()`, and only your code decides what it targets.
+
+This is why the split above costs you nothing extra to adopt: the provider interface already expects to call *something you control*, and putting your own backend on the other end of that call is the interface working as designed, not a workaround bolted onto it.
+
+The same applies to file uploads. An [upload provider](/docs/integration/uploads/)'s own interface comment is explicit that implementations must not embed secret keys client-side — operations that need one, such as deletion or signed uploads, belong behind a server-side proxy, not inside a provider shipped to the browser.
+
+## Where this fits
+
+Concrete, vendor-by-vendor recipes for putting a specific backend behind a proxy are not written yet — this page describes the architecture the recipes will implement, not the recipes themselves. The [HTTP adapter](/docs/integration/http-adapter/) is the piece that turns a proxy endpoint into a working provider once you have one, and a future revision of this page will point to per-vendor recipes once they exist.
+
+Until then, the rule above and the shape it implies are what to build against: keep the key on a server you control, and let an agent or upload provider talk to that server instead of the vendor directly.
