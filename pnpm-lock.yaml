@@ -12,8 +12,8 @@ importers:
         specifier: ^0.41.5
         version: 0.41.5(@astrojs/markdown-remark@7.2.1)(astro@7.1.4(@astrojs/markdown-remark@7.2.1)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.3)(@types/node@24.13.3)(yaml@2.9.0))(typescript@6.0.3)
       '@loquix/core':
-        specifier: 0.5.0
-        version: 0.5.0(lit@3.3.3)
+        specifier: 0.6.0
+        version: 0.6.0(lit@3.3.3)
       astro:
         specifier: ^7.0.2
         version: 7.1.4(@astrojs/markdown-remark@7.2.1)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.3)(@types/node@24.13.3)(yaml@2.9.0)
@@ -615,8 +615,8 @@ packages:
   '@lit/reactive-element@2.1.2':
     resolution: {integrity: sha512-pbCDiVMnne1lYUIaYNN5wrwQXDtHaYtg7YEFPeW+hws6U47WeFvISGUWekPGKWOP1ygrs0ef0o1VJMk1exos5A==}
 
-  '@loquix/core@0.5.0':
-    resolution: {integrity: sha512-eFXfsQr9cD8gztOKypeYguBCJBPZso84R/b01NFzGD/S7HLPrRTKMMNA2F32Fpz92uTbB5rLyqaf2643WudYdg==}
+  '@loquix/core@0.6.0':
+    resolution: {integrity: sha512-fzugLS+mlDHG2pMbEwOyjsclwLXBXWgk5d7WP/AzMw+OtRUHWy3+mm/zyLqnzdN8si68XwMfNVsdFR3xPqytuA==}
     peerDependencies:
       lit: ^3.0.0
 
@@ -2853,7 +2853,7 @@ snapshots:
     dependencies:
       '@lit-labs/ssr-dom-shim': 1.6.0
 
-  '@loquix/core@0.5.0(lit@3.3.3)':
+  '@loquix/core@0.6.0(lit@3.3.3)':
     dependencies:
       '@floating-ui/dom': 1.8.0
       lit: 3.3.3

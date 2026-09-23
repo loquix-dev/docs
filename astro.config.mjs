@@ -52,7 +52,7 @@ export default defineConfig({
 						{ label: 'Overview', slug: 'index' },
 						{ label: 'Quick start', slug: 'quick-start', badge: { text: 'Start here', variant: 'success' } },
 						{ label: 'Installation', slug: 'installation' },
-						{ label: 'Component catalog', slug: 'components', badge: 'v0.4.1' },
+						{ label: 'Component catalog', slug: 'components', badge: 'v0.6.0' },
 					],
 				},
 				{
