@@ -28,7 +28,7 @@ The controller's `state` is one of:
 | `streaming` | The response stream is being read and its chunks are accumulating. |
 | `paused` | Streaming was suspended with `pause()`; chunks continue to arrive but are buffered rather than applied. |
 | `complete` | The response finished and was appended to `messages` as an assistant message. |
-| `error` | The provider's `send()` rejected after being called, the stream errored outside of an abort, or the send failed before it ever reached the provider — an unusable `sendTimeout` value does that, and `send()` does not reject in that case. What `currentResponseText` holds at that point depends on which — see "Partial responses" below. This is narrower than every way `send()` can reject: the `maxMessageLength` and `maxMessages` checks and the concurrent-send guard, all described under `send()` below, reject before the provider is ever called and leave `state` untouched. |
+| `error` | The provider's `send()` rejected after being called — including a `sendTimeout` that fires while it is still pending — or the stream errored outside of an abort, including a `streamIdleTimeout` that trips. What `currentResponseText` holds at that point depends on which — see "Partial responses" below. This is narrower than every way `send()` can reject: the `maxMessageLength` and `maxMessages` checks and the concurrent-send guard, all described under `send()` below, reject before the provider is ever called and leave `state` untouched. |
 
 ## Methods
 
@@ -66,6 +66,7 @@ The third constructor argument configures the controller. Everything is optional
 | `params` | `Record<string, unknown>` | none |
 | `systemPrompt` | `string` | none |
 | `sendTimeout` | `number` (ms) | `60_000` |
+| `streamIdleTimeout` | `number` (ms) | `60_000` |
 | `maxMessageLength` | `number` | `100_000` |
 | `maxMessages` | `number` | `200` |
 
@@ -75,17 +76,35 @@ The third constructor argument configures the controller. Everything is optional
 
 ### `sendTimeout`
 
-`sendTimeout` does not bound only the wait for a response to start. On every `send()`, the controller composes its own abort signal with `AbortSignal.timeout(sendTimeout)` using `AbortSignal.any([...])`, and passes the combined signal to `provider.send()` as `options.signal`. A provider that forwards that signal to `fetch` — which is what the [example provider](/docs/integration/agent-provider/) does — has the timeout abort the fetch itself, body included. That means the signal stays live for as long as the response is being read, not just until the promise from `provider.send()` resolves: a generation that is still streaming past the sixty-second default is cut off mid-answer, not just a slow-starting one.
+`sendTimeout` bounds only the wait for `provider.send()` to resolve with a stream — not the response that follows. On every `send()`, the controller composes its own abort signal with a dedicated timeout signal and passes the combined signal to `provider.send()` as `options.signal`, the same as before. The difference is what happens once `provider.send()` resolves: the controller clears that timer itself, right there, before doing anything else. From that point on the composed signal can still fire from a deliberate abort — `abort()`, `reset()`, `setProvider()`, `hostDisconnected()` — but `sendTimeout` itself has no further effect, even for a provider that forwards the signal straight to `fetch` for the whole request, as the [example provider](/docs/integration/agent-provider/) does.
 
-The controller's own doc comment describes `sendTimeout` as bounding the time "until the `ReadableStream` is returned, NOT until first chunk." That description is only accurate for a provider that does not forward the signal past its own initial request. Once a provider hands the signal to `fetch`, as the example on the agent provider page does, the bound covers the entire exchange.
+Measured: with `sendTimeout: 500`, a stream that starts inside that window and then keeps emitting chunks for 1.2 seconds completes in full — the assistant message is appended and no error fires. A `provider.send()` that never resolves at all is a different story: that wait is still bounded at the configured value, exactly as before, since there is no stream yet to leave alone.
 
-Unlike the four options on the [upload controller](/docs/integration/uploads/)'s options table, `sendTimeout` is **not** sanitized. `0` and `NaN` are both falsy. The controller's `if (this._options.sendTimeout)` check skips creating a timeout signal entirely, so the send never times out. `-1` is truthy, so it reaches `AbortSignal.timeout(-1)`, which throws a `RangeError` inside the `try` block and puts the controller straight into `error` before any request is made.
+The controller's own doc comment describes `sendTimeout` as bounding the time "until the `ReadableStream` is returned, NOT until first chunk." That is now accurate for every provider, including one that forwards the signal to `fetch` for the entire exchange — the timer backing `sendTimeout` is already gone by the time the stream exists, so there is nothing left for that forwarded signal to cut off mid-answer.
+
+Use `streamIdleTimeout`, below, to bound a stream that has already started.
+
+### `streamIdleTimeout`
+
+Aborts the response stream when no chunk has arrived within this many milliseconds, resetting on every chunk — a long but healthy answer is never punished, only silence is. Default `60_000`, same as `sendTimeout`.
+
+Measured: a stream that emits one chunk and then goes silent trips a `streamIdleTimeout: 300` after 300ms, moving the controller to `error` and firing `onError`. The same 300ms window does not trip against a stream with steady 150ms gaps between chunks, which runs to completion normally.
+
+Pausing suspends idle detection entirely rather than letting it keep counting down — time spent `paused` is never held against the stream. Measured: pausing for 600ms under a 300ms `streamIdleTimeout` does not trip it, and resuming gives the stream a fresh idle window rather than one already half-spent.
+
+When `streamIdleTimeout` trips, `currentResponseText` still holds whatever text had accumulated — see "Partial responses" below.
+
+### Sanitizing
+
+`sendTimeout` and `streamIdleTimeout` are each sanitized the same way: `undefined` falls back to the `60_000` default; a non-finite value (`NaN`, `Infinity`, anything that is not a number) falls back to the default too, rather than reaching a raw timer; an explicit `0` or a negative number disables that timeout entirely. Measured: `sendTimeout: -1` no longer throws — it behaves exactly like `sendTimeout: 0`, sending with no send timeout at all.
+
+This is a different rule from the [upload controller](/docs/integration/uploads/)'s four sanitized options, which floor a too-low value up to a minimum rather than disabling it — `uploadTimeout: 500` becomes `1000`, never "off". Here, `0` or negative always means off, for both options.
 
 ### Partial responses
 
 A response that gets interrupted is not handled the same way by every path that can cause it — `messages` never gets an entry for a response that did not finish, in any of these cases, but `currentResponseText` behaves differently in each:
 
-- **A `sendTimeout` or other stream failure that lands *after* the response has started streaming** moves the controller to `error` and fires `onError`. `currentResponseText` keeps whatever text had accumulated up to that point. Persisting it, if you want to, is the host's job — do it from the `onError` callback.
+- **`streamIdleTimeout` tripping, or another stream failure that lands *after* the response has started streaming,** moves the controller to `error` and fires `onError`. `currentResponseText` keeps whatever text had accumulated up to that point. Persisting it, if you want to, is the host's job — do it from the `onError` callback. `sendTimeout` cannot land here anymore — see above.
 - **`abort()` and `hostDisconnected()`** stop the stream and return to `idle` instead — `onError` does not fire for either. `currentResponseText` still keeps the accumulated text, so a host that cares about this case has to check for it right after calling `abort()` itself (or after tearing down the host), not from a callback.
 - **`reset()`** goes further: it clears `currentResponseText` along with everything else, so there is nothing left to read once it returns.
 - **A call to the provider's `send()` that rejects before any response starts streaming** also lands in `error`, but `currentResponseText` is untouched by it. This covers two different failures the same way: an immediate network error the provider throws right away, and a `sendTimeout` that fires while the provider's own promise is still pending — before it ever hands back a stream to interrupt. Either way, `currentResponseText` still holds whatever response completed *last*, not anything from the new failed attempt. Reading it as "the answer that just failed" only makes sense for the mid-stream case above; here, persisting it would just re-save the previous response. (This is distinct from the guard-clause rejections on `send()` covered above, which reject before the provider is ever called and never touch `state` at all.)

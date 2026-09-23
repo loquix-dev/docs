@@ -26,7 +26,7 @@ The controller already handles work that is easy to underestimate:
 - **Streaming assembly** — accumulating chunks into a current response as they arrive.
 - **Abort** — a single `AbortController` per request that cancels an in-flight send or an active stream.
 - **Pause and resume** — suspending and continuing stream consumption, handled separately from abort.
-- **Timeouts** — a default 60-second signal, composed with the controller's own abort signal (there is no signal you supply), passed to your provider. A provider that forwards it to `fetch` cuts off the whole exchange at sixty seconds, not just the wait for the stream to start.
+- **Timeouts** — two of them, each defaulting to sixty seconds. `sendTimeout` bounds only the wait for your provider's `send()` to resolve with a stream; the moment it does, that timeout is cleared and cannot fire again, so a response that goes on streaming past sixty seconds is left alone. `streamIdleTimeout` bounds the stream itself, but only its silences — it resets on every chunk, so a long, actively-producing answer is never cut off, only one that goes quiet.
 - **Message limits** — default caps on a single message's length and on how many messages a conversation holds.
 
 None of that is implicit or hidden inside a component. It lives in the controller, and it exists so you do not have to reimplement it around every backend.
