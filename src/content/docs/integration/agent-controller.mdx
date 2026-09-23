@@ -74,6 +74,8 @@ The third constructor argument configures the controller. Everything is optional
 
 `maxMessageLength` rejects an individual message whose content is too long; `maxMessages` rejects a `send()` that would push the conversation over the cap, counting both the new user message and the assistant response it will produce. Both reject the promise `send()` returns, before any request is made. `send()` is `async`, so the error never arrives as a synchronous exception — `await` the call, or attach a `.catch()`, to see it.
 
+These two guards, and the concurrent-send guard above, are the only things that reject `send()`. Everything that goes wrong *after* the provider is called — a provider that throws, a `sendTimeout`, a stream that errors — is caught by the controller instead: `send()` resolves normally, `state` becomes `error`, and `onError` is where you hear about it.
+
 ### `sendTimeout`
 
 `sendTimeout` bounds only the wait for `provider.send()` to resolve with a stream — not the response that follows. On every `send()`, the controller composes its own abort signal with a dedicated timeout signal and passes the combined signal to `provider.send()` as `options.signal`, the same as before. The difference is what happens once `provider.send()` resolves: the controller clears that timer itself, right there, before doing anything else. From that point on the composed signal can still fire from a deliberate abort — `abort()`, `reset()`, `setProvider()`, `hostDisconnected()` — but `sendTimeout` itself has no further effect, even for a provider that forwards the signal straight to `fetch` for the whole request, as the [example provider](/docs/integration/agent-provider/) does.

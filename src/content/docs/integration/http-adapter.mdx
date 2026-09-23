@@ -109,7 +109,7 @@ If you supply your own `parse` and it throws, that exception is not caught, rega
 
 ## Errors
 
-`send()` rejects with `HttpAgentError`, an `Error` subclass carrying a `status: number`, a `code` telling you which of three unrelated situations it was, and, for one of those codes, the parsed error body:
+Three unrelated situations produce an `HttpAgentError`, an `Error` subclass carrying a `status: number`, a `code` naming which one it was, and, for one of those codes, the parsed error body. Two of them reject `send()`; the third, `transport_mismatch`, lets `send()` resolve and surfaces on the first read of the stream, so a `try`/`catch` around `send()` alone will not see it:
 
 ```ts
 type HttpAgentErrorCode = 'http' | 'no_body' | 'transport_mismatch';
