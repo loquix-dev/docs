@@ -5,10 +5,6 @@ description: Turn an HTTP endpoint into an AgentProvider, with streaming, cancel
 
 import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
 
-<Aside type="caution" title="Not published yet">
-`@loquix/adapter-http` is unreleased. It ships shortly; until then, the install command below will not resolve. The API on this page describes the package as it will ship.
-</Aside>
-
 `@loquix/adapter-http` builds an [`AgentProvider`](/docs/integration/agent-provider/) for you out of a URL. Point it at your own backend and it POSTs the conversation, reads the response as it streams in, and turns it into the plain-text `ReadableStream` the interface expects — including the abort handling, the non-2xx rejections, and the frame-by-frame decoding a hand-written provider would otherwise have to implement itself. What it replaces is the hand-written `send()` implementation from the agent provider page, not the `AgentProvider` interface itself — everything the agent controller expects from a provider still applies.
 
 The package has zero runtime dependencies and holds no credentials. The URL it POSTs to is your own backend, so provider API keys stay on your server; see [keeping keys safe](/docs/integration/keeping-keys-safe/) for why that split exists and what it costs you to keep.
@@ -19,21 +15,21 @@ The package has zero runtime dependencies and holds no credentials. The URL it P
 	<TabItem label="npm">
 
 	```sh
-	npm install @loquix/adapter-http
+	npm install @loquix/adapter-http@0.1.0
 	```
 
 	</TabItem>
 	<TabItem label="pnpm">
 
 	```sh
-	pnpm add @loquix/adapter-http
+	pnpm add @loquix/adapter-http@0.1.0
 	```
 
 	</TabItem>
 	<TabItem label="yarn">
 
 	```sh
-	yarn add @loquix/adapter-http
+	yarn add @loquix/adapter-http@0.1.0
 	```
 
 	</TabItem>
