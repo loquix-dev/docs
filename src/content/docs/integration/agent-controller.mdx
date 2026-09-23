@@ -98,7 +98,16 @@ When `streamIdleTimeout` trips, `currentResponseText` still holds whatever text 
 
 ### Sanitizing
 
-`sendTimeout` and `streamIdleTimeout` are each sanitized the same way: `undefined` falls back to the `60_000` default; a non-finite value (`NaN`, `Infinity`, anything that is not a number) falls back to the default too, rather than reaching a raw timer; an explicit `0` or a negative number disables that timeout entirely. Measured: `sendTimeout: -1` no longer throws — it behaves exactly like `sendTimeout: 0`, sending with no send timeout at all.
+`sendTimeout` and `streamIdleTimeout` are each sanitized the same way, and the rule maps each kind of odd value onto what it most likely means:
+
+| Value | Result | Why |
+| --- | --- | --- |
+| `undefined` | `60_000` | The option was not set. |
+| `0` or negative | disabled | An explicit request for no timeout. `sendTimeout: -1` no longer throws; it behaves exactly like `0`. |
+| `Infinity`, `-Infinity` | disabled | The natural way to write "no limit". |
+| `NaN`, or anything that is not a number | `60_000` | Almost always arithmetic on a missing config value, so the guard is kept rather than silently removed. |
+
+This differs on purpose from the upload options on [File uploads](/docs/integration/uploads/), where `Infinity` falls back to the default: an unbounded retry count or concurrency is meaningless, while an unbounded timeout is a thing people genuinely want.
 
 This is a different rule from the [upload controller](/docs/integration/uploads/)'s four sanitized options, which floor a too-low value up to a minimum rather than disabling it — `uploadTimeout: 500` becomes `1000`, never "off". Here, `0` or negative always means off, for both options.
 
