@@ -73,8 +73,8 @@ The table lists every field of `HttpAgentProviderOptions`, in the order the inte
 | `transport` | `'sse' \| 'ndjson' \| 'text'` | `'sse'` | Which wire format to decode the response as. See "Transports" below. |
 | `headers` | `Record<string, string> \| (() => Record<string, string> \| Promise<Record<string, string>>)` | *(none)* | Extra request headers, merged over the adapter's own `content-type: application/json`. A function may be async, so a fresh auth token can be fetched per request. |
 | `credentials` | `RequestCredentials` | `'same-origin'` | Passed straight through to `fetch`. |
-| `body` | `(messages, options) => unknown` | posts `{ messages, model, params, systemPrompt }` | Overrides the JSON body sent to the endpoint. Whatever it returns is `JSON.stringify`'d as-is. |
-| `parse` | `(chunk: string) => string \| null` | transport-dependent, see "Transports" | Overrides how a decoded chunk becomes text. See "The `parse` hook" below. |
+| `body` | `(messages, options) => unknown` | posts `{ messages, model, params, systemPrompt }` | Overrides the request payload. A `string` return is sent as the request body as-is — use this if you are already serializing yourself, so it does not get `JSON.stringify`'d a second time. Anything else is `JSON.stringify`'d as before. |
+| `parse` | `(chunk: string, frame?: SseFrameMeta) => string \| null` | transport-dependent, see "Transports" | Overrides how a decoded chunk becomes text. See "The `parse` hook" below. Cannot be combined with `transport: 'text'` — throws at construction. |
 | `fetch` | `typeof globalThis.fetch` | `globalThis.fetch` | Swap in a wrapped or polyfilled `fetch`, or a stub for tests. |
 
 <Aside type="note">
@@ -99,7 +99,7 @@ A body whose lines are all valid JSON carrying none of those fields is fine: it 
 
 ### `text`
 
-Expects nothing in particular. Every byte that arrives is decoded and passed straight through as a chunk of the output stream, with no framing and no parsing. Choose this when your backend already streams plain text and any structure — including a literal `[DONE]` — should reach the caller as ordinary bytes rather than being interpreted by the adapter.
+Expects nothing in particular. Every byte that arrives is decoded and passed straight through as a chunk of the output stream, with no framing and no parsing. Choose this when your backend already streams plain text and any structure — including a literal `[DONE]` — should reach the caller as ordinary bytes rather than being interpreted by the adapter. `parse` cannot be combined with `text` — see "The `parse` hook" below.
 
 <Aside type="caution">
 Skip-on-malformed is an `ndjson` behavior, not an `sse` one. The default `ndjson` parser wraps its `JSON.parse` in a `try`/`catch`: a line that is not valid JSON is skipped and streaming continues, so one hiccup on the wire does not fail the whole response. The default `sse` parser does no parsing at all — it returns each frame's joined `data:` payload verbatim — so there is nothing for it to reject; a "malformed" SSE frame (say, one whose `data:` payload happens to be truncated JSON) still reaches the caller as text, unchanged.
@@ -109,31 +109,55 @@ If you supply your own `parse` and it throws, that exception is not caught, rega
 
 ## Errors
 
-`send()` rejects with `HttpAgentError`, an `Error` subclass with a `status: number`, in exactly two cases:
+`send()` rejects with `HttpAgentError`, an `Error` subclass carrying a `status: number`, a `code` telling you which of three unrelated situations it was, and, for one of those codes, the parsed error body:
 
 ```ts
+type HttpAgentErrorCode = 'http' | 'no_body' | 'transport_mismatch';
+
 class HttpAgentError extends Error {
   readonly status: number;
+  readonly code: HttpAgentErrorCode;
+  readonly body?: unknown;
 }
 ```
 
-- **A non-2xx response.** The adapter tries to read the body as JSON and use its `message` or `error` field as the error text; if the body is not JSON, it falls back to the response's status text. Either way, `status` is the response's actual HTTP status.
-- **A 2xx response with a null body.** The guard is `if (!response.body)`. A real `200 OK` with an *empty* body still has a non-null, readable `body` — `send()` resolves normally and the stream simply yields nothing. What actually triggers this case is a response with no body object at all: a `204 No Content` (the fetch spec gives these a null `body`), or a stub `Response` built with `body: null` in a test. The adapter treats it as a failure: it rejects with `HttpAgentError`, and `status` is the response's real status — a `204` produces `status: 204`, not a fabricated `502`.
+`code` exists so you can tell the three kinds apart without string-matching `message`, which was never meant to be parsed. It is one of:
 
-Both happen after `fetch` itself has already resolved. Anything that keeps `fetch` from resolving at all rejects `send()` unwrapped, with whatever `fetch` (or your own `fetch` replacement) rejects with — the adapter does not catch or wrap it:
+- **`'http'`** — a non-2xx response. `status` is the response's actual HTTP status. `body` is the parsed JSON error body, when there was one.
+- **`'no_body'`** — a 2xx response with no body to stream. `body` is not set.
+- **`'transport_mismatch'`** — the body never produced a single frame recognizable as the configured `transport`. See "A transport mismatch" below. `body` is not set.
+
+### The `'http'` message and `body`
+
+The adapter only attempts to read the response as JSON when the `content-type` header says so — a non-JSON error body (an HTML error page, or a `text/event-stream` response that opens and never closes) is left alone rather than awaited with `response.json()`, which would otherwise hang the rejection until the stream ends, or forever. When the content-type does say JSON, the parsed value becomes `body`, and its message is extracted from whichever shape matches:
+
+- A top-level `message` field.
+- `error.message`, the nested shape OpenAI and Anthropic both use.
+- A bare `error` field, string or otherwise.
+- `detail`, including FastAPI's validation-error array (`[{ loc, msg, type }, ...]`), whose `msg` fields are joined with `; `.
+
+If none of those match, or the body was not JSON, the message falls back to the response's status text. Either way, `status` is the response's actual HTTP status.
+
+**A 2xx response with no body** (`code: 'no_body'`) is a separate, narrower case. The guard is `if (!response.body)`. A real `200 OK` with an *empty* body still has a non-null, readable `body` — `send()` resolves normally and the stream simply yields nothing. What actually triggers `no_body` is a response with no body object at all: a `204 No Content` (the fetch spec gives these a null `body`), or a stub `Response` built with `body: null` in a test. `status` is still the response's real status — a `204` produces `status: 204`, not a fabricated one.
+
+Both of the above happen after `fetch` itself has already resolved. Anything that keeps `fetch` from resolving at all rejects `send()` unwrapped, with whatever `fetch` (or your own `fetch` replacement) rejects with — the adapter does not catch or wrap it, so there is no `HttpAgentError` and no `code` to check:
 
 - A network failure — DNS, connection refused, offline — rejects with a `TypeError`, `fetch`'s own error for that case.
 - A `signal` that aborts before the response arrives rejects with a `DOMException` named `AbortError`. See "Cancellation" below for the case where the abort instead happens mid-stream, after `fetch` has already resolved.
 
-A malformed *line inside* a body that did arrive is not one of these cases — see the caution above. Besides the cases above, `send()` **itself** also rejects, unwrapped, if a `url`, `headers`, or `body` function you supplied throws — `performRequest` calls all three before `fetch` ever runs, so that exception is entirely your own code's, not the adapter's. Otherwise, a missing body, a non-2xx status, a body you built that `JSON.stringify` refuses, or `fetch` itself failing or aborting before it resolves are what fail `send()`. A body that did arrive can still produce an error later, on the stream rather than from `send()` — see below.
+A malformed *line inside* a body that did arrive is not one of these cases — see the caution above. Besides the cases above, `send()` **itself** also rejects, unwrapped, if a `url`, `headers`, or `body` function you supplied throws — `performRequest` calls all three before `fetch` ever runs, so that exception is entirely your own code's, not the adapter's. A body that did arrive can still produce an error later, on the stream rather than from `send()` — see below.
 
 ### A transport mismatch
 
 The default parser can legitimately produce no text for an entire response. A stream of heartbeat comments, tool-call metadata objects, or `{"text": null}` lines are all correctly shaped for their transport — they just have nothing to say this turn — and none of that should look like an error.
 
-What the adapter actually checks is narrower than "produced no chunk": whether the response contained at least one frame that was not merely blank, and whether the configured transport ever recognized one of those frames as its own shape. For `sse`, recognized means a line starting with `data:`, `event:`, `id:`, `retry:`, or `:` (a comment). For `ndjson`, it means a line that parses as JSON at all, whatever it contains. Only when at least one such frame arrived and *none* of them were recognized does the adapter treat it as a likely transport mismatch — reading SSE frames as `ndjson`, say, or a `200` whose body is a bare JSON error object read as `sse`. Left alone, that would otherwise close as an ordinary empty stream: a blank assistant message with no clue why. Instead, the first `reader.read()` on `response.stream` rejects with an `HttpAgentError` carrying the response's real `status`, naming both the transport that was configured and the response's `content-type`.
+What the adapter actually checks is narrower than "produced no chunk": whether the response contained at least one frame that was not merely blank, and whether the configured transport ever recognized one of those frames as its own shape. For `sse`, recognized means a line starting with `data:`, `event:`, `id:`, `retry:`, or `:` (a comment). For `ndjson`, it means a line that parses as JSON at all, whatever it contains. Only when at least one such frame arrived and *none* of them were recognized does the adapter treat it as a likely transport mismatch. Left alone, that would otherwise close as an ordinary empty stream: a blank assistant message with no clue why. Instead, the first `reader.read()` on `response.stream` rejects with an `HttpAgentError` (`code: 'transport_mismatch'`) carrying the response's real `status`, naming both the transport that was configured and the response's `content-type`.
 
-Supplying your own `parse` disables this check entirely, regardless of what it returns — a genuine mismatch behind a `parse` hook still closes cleanly with no diagnostic, the one case where you are back to the old silent blank message, so it is worth testing a custom `parse` against a real response from your backend. A `[DONE]` sentinel also rules the check out on its own, even with no preceding content, since reaching it at all proves the transport matched what the server sent. A body that arrives with zero bytes total never reaches this check either, since there is nothing to judge in the first place. (A *null* body is a separate, earlier case — see "A 2xx response with a null body" above.) Neither does the `text` transport, which has no framing to recognize in the first place.
+This catches a bare JSON error object under `sse` — a `200` whose body is `{"error":"..."}` with no `data:` line at all is unrecognized, since nothing in it matches the SSE grammar. It does **not** catch the same shape under `ndjson`: `{"error":"..."}` is well-formed JSON, so `ndjson`'s recognizer accepts it as its own shape, and the adapter closes the stream blank instead of erroring. That is a deliberate, narrower check, not an oversight — an earlier version special-cased a top-level `error` field to catch this, and it took a review round to remove, because it false-positived on backends whose own protocol legitimately has a per-item `error` field. If your `ndjson` backend can return a bare error object as its whole response body, check for an empty response yourself rather than relying on this to surface it.
+
+A redirect can produce the same symptom as a genuine mismatch — a `POST` redirected to a GET login page, say, serving HTML as a `200` — without the `transport` option being wrong at all. When `fetch` followed a redirect to get there, the mismatch message names the URL it landed on and points at the redirect as the more likely cause, instead of sending you to change a transport setting that was already correct.
+
+Supplying your own `parse` disables this check entirely, regardless of what it returns — a genuine mismatch behind a `parse` hook still closes cleanly with no diagnostic, the one case where you are back to the old silent blank message, so it is worth testing a custom `parse` against a real response from your backend. A `[DONE]` sentinel also rules the check out on its own, even with no preceding content, since reaching it at all proves the transport matched what the server sent. A body that arrives with zero bytes total never reaches this check either, since there is nothing to judge in the first place. (A *null* body is a separate, earlier case — see "A 2xx response with no body" above.) Neither does the `text` transport, which has no framing to recognize in the first place.
 
 ## Cancellation
 
@@ -144,20 +168,19 @@ Cancellation flows in both directions between the returned stream and the underl
 
 That covers an abort *after* the response has arrived. An abort before `fetch` resolves — for example, the signal is already aborted when you call `send()` — never produces a stream to cancel: it rejects `send()` itself with the same `AbortError`, as described under "Errors" above.
 
-`[DONE]` ends the stream the same way for `sse` and `ndjson`: as soon as either transport reads a frame or line whose payload is exactly `[DONE]`, it closes the output stream and cancels the underlying response body — even if the server keeps the connection open past that point. The `text` transport never does this: with no framing to interpret, a literal `[DONE]` in the byte stream is just more text, passed through like everything else.
+`[DONE]` ends the stream the same way for `sse` and `ndjson`: as soon as either transport reads a frame or line whose payload is `[DONE]`, ignoring surrounding whitespace, it closes the output stream and cancels the underlying response body — even if the server keeps the connection open past that point. Trailing whitespace after the sentinel (`data: [DONE] \n\n`, seen from real servers) is still recognized rather than leaking into the chat as a stray final chunk. The `text` transport never does this: with no framing to interpret, a literal `[DONE]` in the byte stream is just more text, passed through like everything else.
 
 ## The `parse` hook
 
-Set `parse` to replace the default per-transport parsing entirely. It receives one decoded chunk — one `sse` frame's joined `data:` payload, or one `ndjson` line — and returns the text to emit, or `null` to emit nothing for that chunk. It is never called for the `text` transport, which has no per-chunk parsing step to override.
+Set `parse` to replace the default per-transport parsing entirely. It receives one decoded chunk — one `sse` frame's joined `data:` payload, or one `ndjson` line — and returns the text to emit, or `null` to emit nothing for that chunk. A return value that is neither a string nor `null` is coerced with `String(...)` rather than silently dropped, since a hook that returned *something* clearly meant to emit something.
 
-`parse` does not see every chunk, even so. An `sse` frame with no `data:` lines at all (only `event:`, `id:`, or comment lines) never reaches it, and neither does a payload that is exactly `[DONE]` — both are handled before your hook runs, for either transport it applies to.
-
-The most common reason to supply one is a vendor API whose stream does not match the adapter's own `text`/`content`/`delta` convention. For an OpenAI-shaped SSE stream, where each frame is a JSON object with the token under `choices[0].delta.content`:
+For `sse`, `parse` also receives a second argument, `frame?: { event?: string; id?: string }` — the frame's `event:` and `id:` lines, when present. It is `undefined` for `ndjson`, which has no such metadata. This is the only way to see a discriminator some backends put only in `event:` and never in the `data:` payload: LangServe frames a failure as `event: error`, with nothing in the payload itself to tell it apart from ordinary assistant text, so a `parse` that ignores `frame` renders that failure as prose.
 
 ```ts
 const provider = createHttpAgentProvider({
   url: '/api/chat',
-  parse: chunk => {
+  parse: (chunk, frame) => {
+    if (frame?.event === 'error') return null; // or throw, to fail the stream instead of masking it
     const parsed = JSON.parse(chunk);
     return parsed.choices[0]?.delta?.content ?? null;
   },
@@ -165,6 +188,12 @@ const provider = createHttpAgentProvider({
 ```
 
 Given frames whose payloads are `{"choices":[{"delta":{"content":"Hel"}}]}` and `{"choices":[{"delta":{"content":"lo"}}]}`, this accumulates to `"Hello"`.
+
+`parse` does not see every chunk, even so. An `sse` frame with no `data:` lines at all (only `event:`, `id:`, or comment lines) never reaches it, and neither does a payload that is `[DONE]` (ignoring surrounding whitespace) — both are handled before your hook runs, for either transport it applies to.
+
+<Aside type="caution" title="Not with transport: 'text'">
+`parse` cannot be combined with `transport: 'text'`: passing both throws at construction, before any request is made. Under `text`, a chunk boundary is wherever the network happened to segment the TCP stream, not something `parse` can reason about or a consumer can control — the same body could hand your hook a different split on every request, making its output depend on network timing rather than your code. Transform the text after it leaves the stream instead of trying to parse it per chunk.
+</Aside>
 
 <Aside type="caution">
 Write `parse` defensively. As covered under "Transports" above, an exception thrown out of `parse` is not caught — it errors the stream and discards any chunk still queued and not yet delivered to the consumer, rather than being treated like a malformed `ndjson` line and skipped. Text already delivered to the consumer before the throw is not retracted.
